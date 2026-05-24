@@ -85,9 +85,3 @@ Every endpoint returns the same shape:
 | PUT | `/api/admin/factors/{id}` | `{ kg_co2_per_unit }` | Admin | 200 |
 
 Protected routes require an `Authorization: Bearer <token>` header.
-
-## Status (Phase 1)
-
-✅ Bootable Slim 4 skeleton, full routing, JWT + CORS middleware, central JSON error handling.
-✅ Auth (register/login) implemented end-to-end — the PR2 demonstrable feature.
-🔜 CRUD update/delete, dashboard aggregation + carbon calc, challenge join (Phases 3–4 per Gantt).
