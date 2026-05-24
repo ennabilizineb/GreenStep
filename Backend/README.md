@@ -3,7 +3,7 @@
 PHP **Slim 4** RESTful API for GreenStep (Personal Carbon Footprint & Eco Lifestyle Tracker).
 Stack: PHP 8.1+ · Slim 4 · PDO/MySQL · Firebase JWT.
 
-> Maintained by **Member 2 — Backend & API Lead**. Database schema & security policy are owned by **Member 3 — Database & Security Lead**.
+> Maintained by **Member Mohammed Alsakkaf — Backend & API Lead**. Database schema & security policy are owned by **Member 3 — Database & Security Lead**.
 
 ## Project structure
 
