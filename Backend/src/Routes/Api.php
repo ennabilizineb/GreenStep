@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Routes;
 
+use App\Controllers\ActivityTypeController;
 use App\Controllers\AdminController;
 use App\Controllers\AuthController;
 use App\Controllers\ChallengeController;
@@ -37,11 +38,12 @@ final class Api
         $db  = $this->db;
         $jwt = $this->settings['jwt'];
 
-        $auth      = new AuthController($db, $jwt);
-        $logs      = new LogController($db);
-        $challenge = new ChallengeController($db);
-        $tips      = new TipController($db);
-        $admin     = new AdminController($db);
+        $auth          = new AuthController($db, $jwt);
+        $logs          = new LogController($db);
+        $challenge     = new ChallengeController($db);
+        $tips          = new TipController($db);
+        $admin         = new AdminController($db);
+        $activityTypes = new ActivityTypeController($db);
 
         // --- Health check (handy for deployment verification) ---
         $app->get('/api/health', function ($req, $res) {
@@ -52,6 +54,9 @@ final class Api
         // --- Public: authentication ---
         $app->post('/api/auth/register', [$auth, 'register']);
         $app->post('/api/auth/login', [$auth, 'login']);
+
+        // --- Authenticated user: activity type catalogue (needed for log creation form) ---
+        $app->get('/api/activity-types', [$activityTypes, 'index'])->add(new JwtAuthMiddleware($jwt));
 
         // --- Authenticated user: activity logs (CRUD #1) ---
         $app->get('/api/logs', [$logs, 'index'])->add(new JwtAuthMiddleware($jwt));
