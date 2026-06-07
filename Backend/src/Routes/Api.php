@@ -77,6 +77,7 @@ final class Api
 
         // --- Administrator: tip library + emission factors ---
         $app->post('/api/admin/tips', [$admin, 'createTip'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->get('/api/admin/factors', [$admin, 'listFactors'])->add(new JwtAuthMiddleware($jwt, 'admin'));
         $app->put('/api/admin/factors/{id}', [$admin, 'updateFactor'])->add(new JwtAuthMiddleware($jwt, 'admin'));
 
         // --- CORS preflight: answer OPTIONS for any path ---

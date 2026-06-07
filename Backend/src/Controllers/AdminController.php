@@ -74,6 +74,26 @@ final class AdminController
         return JsonResponse::success($response, ['id' => (int) $this->db->lastInsertId()], 201);
     }
 
+    /**
+     * GET /api/admin/factors -> list all emission factors with category names.
+     * Lets the admin see every factor ID and current value before updating.
+     */
+    public function listFactors(Request $request, Response $response): Response
+    {
+        $stmt = $this->db->query(
+            'SELECT at.activity_type_id AS id,
+                    c.name              AS category,
+                    at.name,
+                    at.unit,
+                    at.kg_co2_per_unit
+             FROM   activity_types at
+             JOIN   categories c ON c.category_id = at.category_id
+             ORDER  BY c.name, at.name'
+        );
+
+        return JsonResponse::success($response, $stmt->fetchAll(), 200);
+    }
+
     /** PUT /api/admin/factors/{id} -> update one emission factor */
     public function updateFactor(Request $request, Response $response, array $args): Response
     {
