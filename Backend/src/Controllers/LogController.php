@@ -11,8 +11,15 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 /**
  * Activity Logs — primary CRUD entity #1.
- * Every query is scoped to the authenticated user (from the JWT) so users only
- * ever touch their own rows. Carbon calculation is server-side (see calc note).
+ *
+ * Schema notes (ERD-aligned):
+ *   - activity_logs PK  : activity_log_id  (aliased as "id" in all responses)
+ *   - activity_types PK : activity_type_id
+ *   - activity_logs.logged_on : DATETIME  (DATE() function used in all comparisons)
+ *   - category name resolved via JOIN categories on activity_types.category_id
+ *
+ * All queries are scoped to the authenticated user (JWT sub claim) so users
+ * can only read or modify their own rows.
  */
 final class LogController
 {
@@ -20,24 +27,25 @@ final class LogController
     {
     }
 
-    /** GET /api/logs -> list the current user's logs with calculated kg_co2 per row */
+    /** GET /api/logs -> list the current user's logs with server-calculated kg_co2 */
     public function index(Request $request, Response $response): Response
     {
         $userId = (int) ($request->getAttribute('user')['sub'] ?? 0);
 
         $stmt = $this->db->prepare(
-            'SELECT al.id,
+            'SELECT al.activity_log_id                          AS id,
                     al.activity_type_id,
-                    at.category,
-                    at.name                                       AS activity_name,
+                    c.name                                      AS category,
+                    at.name                                     AS activity_name,
                     at.unit,
                     al.amount,
-                    ROUND(al.amount * at.kg_co2_per_unit, 4)     AS kg_co2,
-                    al.logged_on
+                    ROUND(al.amount * at.kg_co2_per_unit, 4)   AS kg_co2,
+                    DATE(al.logged_on)                          AS logged_on
              FROM   activity_logs al
-             JOIN   activity_types at ON at.id = al.activity_type_id
+             JOIN   activity_types at ON at.activity_type_id = al.activity_type_id
+             JOIN   categories c      ON c.category_id       = at.category_id
              WHERE  al.user_id = :uid
-             ORDER  BY al.logged_on DESC, al.id DESC'
+             ORDER  BY al.logged_on DESC, al.activity_log_id DESC'
         );
         $stmt->execute([':uid' => $userId]);
 
@@ -58,8 +66,10 @@ final class LogController
             return JsonResponse::error($response, 'activity_type_id (int) and amount (number) are required.', 400);
         }
 
-        // Verify the activity_type exists before inserting
-        $typeCheck = $this->db->prepare('SELECT id FROM activity_types WHERE id = :id LIMIT 1');
+        // Verify the activity_type exists (ERD PK is activity_type_id)
+        $typeCheck = $this->db->prepare(
+            'SELECT 1 FROM activity_types WHERE activity_type_id = :id LIMIT 1'
+        );
         $typeCheck->execute([':id' => $activityTypeId]);
         if (!$typeCheck->fetch()) {
             return JsonResponse::error($response, 'activity_type_id does not reference a known activity type.', 422);
@@ -98,13 +108,13 @@ final class LogController
             return JsonResponse::error($response, 'activity_type_id (int) and amount (number) are required.', 400);
         }
 
-        // Ownership check: WHERE id = :id AND user_id = :uid ensures users can only edit their own rows.
+        // Ownership enforced in WHERE — users can only update their own rows
         $stmt = $this->db->prepare(
             'UPDATE activity_logs
              SET    activity_type_id = :type,
                     amount           = :amount,
                     logged_on        = :on
-             WHERE  id = :id AND user_id = :uid'
+             WHERE  activity_log_id = :id AND user_id = :uid'
         );
         $stmt->execute([
             ':type'   => $activityTypeId,
@@ -131,9 +141,8 @@ final class LogController
             return JsonResponse::error($response, 'Invalid log ID.', 400);
         }
 
-        // Ownership check in the WHERE clause — no separate SELECT needed.
         $stmt = $this->db->prepare(
-            'DELETE FROM activity_logs WHERE id = :id AND user_id = :uid'
+            'DELETE FROM activity_logs WHERE activity_log_id = :id AND user_id = :uid'
         );
         $stmt->execute([':id' => $id, ':uid' => $userId]);
 
@@ -145,21 +154,24 @@ final class LogController
     }
 
     /**
-     * GET /api/dashboard -> aggregated footprint stats for the authenticated user.
+     * GET /api/dashboard -> aggregated footprint + streak + badges for the authenticated user.
      *
-     * Response shape (all kg_co2 values are floats, rounded to 4 decimal places):
+     * Response shape:
      * {
-     *   "today_kg_co2":      15.2000,
-     *   "yesterday_kg_co2":  17.9000,
-     *   "streak_days":       7,
-     *   "joined_challenges": 2,
+     *   "today_kg_co2":      float,
+     *   "yesterday_kg_co2":  float,
+     *   "streak_days":       int,
+     *   "joined_challenges": int,
      *   "week": [
-     *     {"date": "2026-06-01", "kg_co2": 18.3},
-     *     ...                                          // up to 7 entries (last 7 days)
+     *     { "date": "YYYY-MM-DD", "kg_co2": float },  // last 7 days
+     *     ...
      *   ],
      *   "by_category": [
-     *     {"category": "transport", "kg_co2": 80.0},
-     *     ...                                          // last 30 days, positive factors only
+     *     { "category": string, "kg_co2": float },     // last 30 days, positive factors only
+     *     ...
+     *   ],
+     *   "badges": [
+     *     { "badge_id": int, "name": string, "image_url": string|null }
      *   ]
      * }
      */
@@ -167,66 +179,66 @@ final class LogController
     {
         $userId = (int) ($request->getAttribute('user')['sub'] ?? 0);
 
-        // --- 1. Today vs yesterday ---
+        // ── 1. Today vs yesterday ──────────────────────────────────────────────
         $todayStmt = $this->db->prepare(
             'SELECT
-                 ROUND(SUM(CASE WHEN al.logged_on = CURDATE()
+                 ROUND(SUM(CASE WHEN DATE(al.logged_on) = CURDATE()
                                 THEN al.amount * at.kg_co2_per_unit ELSE 0 END), 4) AS today_kg,
-                 ROUND(SUM(CASE WHEN al.logged_on = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+                 ROUND(SUM(CASE WHEN DATE(al.logged_on) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
                                 THEN al.amount * at.kg_co2_per_unit ELSE 0 END), 4) AS yesterday_kg
              FROM activity_logs al
-             JOIN activity_types at ON at.id = al.activity_type_id
+             JOIN activity_types at ON at.activity_type_id = al.activity_type_id
              WHERE al.user_id = :uid
-               AND al.logged_on >= DATE_SUB(CURDATE(), INTERVAL 1 DAY)'
+               AND DATE(al.logged_on) >= DATE_SUB(CURDATE(), INTERVAL 1 DAY)'
         );
         $todayStmt->execute([':uid' => $userId]);
-        $todayRow = $todayStmt->fetch();
-
+        $todayRow    = $todayStmt->fetch();
         $todayKg     = (float) ($todayRow['today_kg'] ?? 0);
         $yesterdayKg = (float) ($todayRow['yesterday_kg'] ?? 0);
 
-        // --- 2. Last 7 days for the weekly chart ---
+        // ── 2. Last 7 days for the weekly chart ───────────────────────────────
         $weekStmt = $this->db->prepare(
-            'SELECT   al.logged_on                                          AS date,
-                      ROUND(SUM(al.amount * at.kg_co2_per_unit), 4)        AS kg_co2
+            'SELECT   DATE(al.logged_on)                                AS date,
+                      ROUND(SUM(al.amount * at.kg_co2_per_unit), 4)   AS kg_co2
              FROM     activity_logs al
-             JOIN     activity_types at ON at.id = al.activity_type_id
+             JOIN     activity_types at ON at.activity_type_id = al.activity_type_id
              WHERE    al.user_id = :uid
-               AND    al.logged_on >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
-             GROUP BY al.logged_on
-             ORDER BY al.logged_on ASC'
+               AND    DATE(al.logged_on) >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+             GROUP BY DATE(al.logged_on)
+             ORDER BY DATE(al.logged_on) ASC'
         );
         $weekStmt->execute([':uid' => $userId]);
         $weekRows = $weekStmt->fetchAll();
 
-        // --- 3. Last 30 days grouped by category (positive emission factors only) ---
+        // ── 3. Last 30 days by category (positive emission factors only) ──────
         $catStmt = $this->db->prepare(
-            'SELECT   at.category,
-                      ROUND(SUM(al.amount * at.kg_co2_per_unit), 4) AS kg_co2
+            'SELECT   c.name                                            AS category,
+                      ROUND(SUM(al.amount * at.kg_co2_per_unit), 4)   AS kg_co2
              FROM     activity_logs al
-             JOIN     activity_types at ON at.id = al.activity_type_id
+             JOIN     activity_types at ON at.activity_type_id = al.activity_type_id
+             JOIN     categories c      ON c.category_id       = at.category_id
              WHERE    al.user_id = :uid
-               AND    al.logged_on >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
+               AND    DATE(al.logged_on) >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
                AND    at.kg_co2_per_unit > 0
-             GROUP BY at.category
+             GROUP BY c.category_id
              ORDER BY kg_co2 DESC'
         );
         $catStmt->execute([':uid' => $userId]);
         $byCategory = $catStmt->fetchAll();
 
-        // --- 4. Number of challenges the user has joined ---
+        // ── 4. Joined challenge count ─────────────────────────────────────────
         $challengeStmt = $this->db->prepare(
-            'SELECT COUNT(*) AS cnt FROM challenge_members WHERE user_id = :uid'
+            'SELECT COUNT(*) FROM challenge_members WHERE user_id = :uid'
         );
         $challengeStmt->execute([':uid' => $userId]);
-        $joinedChallenges = (int) ($challengeStmt->fetchColumn() ?? 0);
+        $joinedChallenges = (int) $challengeStmt->fetchColumn();
 
-        // --- 5. Consecutive-day streak (today or yesterday counts as day 1) ---
+        // ── 5. Consecutive-day streak ─────────────────────────────────────────
         $streakStmt = $this->db->prepare(
-            'SELECT DISTINCT logged_on
+            'SELECT DISTINCT DATE(logged_on) AS log_date
              FROM   activity_logs
              WHERE  user_id = :uid
-             ORDER  BY logged_on DESC'
+             ORDER  BY log_date DESC'
         );
         $streakStmt->execute([':uid' => $userId]);
         $loggedDates = $streakStmt->fetchAll(PDO::FETCH_COLUMN);
@@ -239,8 +251,69 @@ final class LogController
                 $streak++;
                 $expected->modify('-1 day');
             } elseif ($day < $expected) {
-                // Gap found — streak is broken.
                 break;
+            }
+        }
+
+        // ── 6. Badge evaluation & auto-awarding ───────────────────────────────
+        // Fetch all defined badges
+        $allBadgesStmt = $this->db->query(
+            'SELECT badge_id, name, criteria_json, image_url FROM badges'
+        );
+        $allBadges = $allBadgesStmt->fetchAll();
+
+        // Stats needed for badge criteria
+        $totalLogsStmt = $this->db->prepare(
+            'SELECT COUNT(*) FROM activity_logs WHERE user_id = :uid'
+        );
+        $totalLogsStmt->execute([':uid' => $userId]);
+        $totalLogs = (int) $totalLogsStmt->fetchColumn();
+
+        $categoryLogCounts = [];
+        $catLogsStmt = $this->db->prepare(
+            'SELECT c.name AS category, COUNT(*) AS cnt
+             FROM   activity_logs al
+             JOIN   activity_types at ON at.activity_type_id = al.activity_type_id
+             JOIN   categories c      ON c.category_id       = at.category_id
+             WHERE  al.user_id = :uid
+             GROUP  BY c.category_id'
+        );
+        $catLogsStmt->execute([':uid' => $userId]);
+        foreach ($catLogsStmt->fetchAll() as $row) {
+            $categoryLogCounts[$row['category']] = (int) $row['cnt'];
+        }
+
+        $earnedBadges = [];
+        foreach ($allBadges as $badge) {
+            $criteria = json_decode($badge['criteria_json'], true);
+            $earned   = false;
+
+            switch ($criteria['type'] ?? '') {
+                case 'total_logs':
+                    $earned = $totalLogs >= (int) $criteria['threshold'];
+                    break;
+                case 'streak_days':
+                    $earned = $streak >= (int) $criteria['threshold'];
+                    break;
+                case 'category_logs':
+                    $cat    = (string) ($criteria['category'] ?? '');
+                    $earned = ($categoryLogCounts[$cat] ?? 0) >= (int) $criteria['threshold'];
+                    break;
+            }
+
+            if ($earned) {
+                // INSERT IGNORE silently skips duplicate composite PK (badge_id, user_id)
+                $awardStmt = $this->db->prepare(
+                    'INSERT IGNORE INTO user_badges (badge_id, user_id, awarded_on)
+                     VALUES (:bid, :uid, NOW())'
+                );
+                $awardStmt->execute([':bid' => $badge['badge_id'], ':uid' => $userId]);
+
+                $earnedBadges[] = [
+                    'badge_id'  => (int) $badge['badge_id'],
+                    'name'      => $badge['name'],
+                    'image_url' => $badge['image_url'],
+                ];
             }
         }
 
@@ -251,6 +324,7 @@ final class LogController
             'joined_challenges' => $joinedChallenges,
             'week'              => $weekRows,
             'by_category'       => $byCategory,
+            'badges'            => $earnedBadges,
         ], 200);
     }
 }

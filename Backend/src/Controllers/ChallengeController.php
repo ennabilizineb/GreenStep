@@ -12,6 +12,11 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 /**
  * Community Challenges — primary CRUD entity #2.
+ *
+ * Schema notes (ERD-aligned):
+ *   - challenges PK       : challenge_id  (aliased as "id" in all responses)
+ *   - challenge_members   : composite PK (challenge_id, user_id) — no separate id column
+ *
  * Create/update/delete are gated to the Community Leader role at the route layer;
  * any authenticated user may list and join.
  */
@@ -27,24 +32,23 @@ final class ChallengeController
      * Each row includes:
      *   - member_count : total participants
      *   - is_joined    : 1 if the calling user has joined, 0 otherwise
-     * This lets the frontend render a "Join / Joined" button without a second request.
      */
     public function index(Request $request, Response $response): Response
     {
         $userId = (int) ($request->getAttribute('user')['sub'] ?? 0);
 
         $stmt = $this->db->prepare(
-            'SELECT c.id,
+            'SELECT c.challenge_id                                                           AS id,
                     c.name,
                     c.description,
                     c.start_date,
                     c.end_date,
                     c.target_co2_reduction,
-                    COUNT(cm.id)                                                         AS member_count,
-                    CAST(MAX(CASE WHEN cm.user_id = :uid THEN 1 ELSE 0 END) AS UNSIGNED) AS is_joined
+                    COUNT(cm.user_id)                                                        AS member_count,
+                    CAST(MAX(CASE WHEN cm.user_id = :uid THEN 1 ELSE 0 END) AS UNSIGNED)     AS is_joined
              FROM   challenges c
-             LEFT   JOIN challenge_members cm ON cm.challenge_id = c.id
-             GROUP  BY c.id
+             LEFT   JOIN challenge_members cm ON cm.challenge_id = c.challenge_id
+             GROUP  BY c.challenge_id
              ORDER  BY c.start_date DESC'
         );
         $stmt->execute([':uid' => $userId]);
@@ -82,7 +86,7 @@ final class ChallengeController
         return JsonResponse::success($response, ['id' => (int) $this->db->lastInsertId()], 201);
     }
 
-    /** PUT /api/challenges/{id} -> update (Community Leader) */
+    /** PUT /api/challenges/{id} -> partial update (Community Leader) */
     public function update(Request $request, Response $response, array $args): Response
     {
         $id = filter_var($args['id'] ?? null, FILTER_VALIDATE_INT);
@@ -118,21 +122,15 @@ final class ChallengeController
             return JsonResponse::error($response, 'Provide at least one of: name, description, target_co2_reduction.', 400);
         }
 
-        // Map placeholder keys to column names for the SET clause.
-        $columnMap = [
-            ':name'   => 'name',
-            ':desc'   => 'description',
-            ':target' => 'target_co2_reduction',
-        ];
-
+        $columnMap = [':name' => 'name', ':desc' => 'description', ':target' => 'target_co2_reduction'];
         $setClauses = [];
         foreach ($sets as $placeholder => $value) {
-            $setClauses[] = $columnMap[$placeholder] . ' = ' . $placeholder;
+            $setClauses[]        = $columnMap[$placeholder] . ' = ' . $placeholder;
             $params[$placeholder] = $value;
         }
 
         $stmt = $this->db->prepare(
-            'UPDATE challenges SET ' . implode(', ', $setClauses) . ' WHERE id = :id'
+            'UPDATE challenges SET ' . implode(', ', $setClauses) . ' WHERE challenge_id = :id'
         );
         $stmt->execute($params);
 
@@ -151,7 +149,7 @@ final class ChallengeController
             return JsonResponse::error($response, 'Invalid challenge ID.', 400);
         }
 
-        $stmt = $this->db->prepare('DELETE FROM challenges WHERE id = :id');
+        $stmt = $this->db->prepare('DELETE FROM challenges WHERE challenge_id = :id');
         $stmt->execute([':id' => $id]);
 
         if ($stmt->rowCount() === 0) {
@@ -171,20 +169,21 @@ final class ChallengeController
             return JsonResponse::error($response, 'Invalid challenge ID.', 400);
         }
 
-        // Verify the challenge exists before attempting to join.
-        $check = $this->db->prepare('SELECT id FROM challenges WHERE id = :id LIMIT 1');
+        // Verify challenge exists before attempting to join
+        $check = $this->db->prepare('SELECT 1 FROM challenges WHERE challenge_id = :id LIMIT 1');
         $check->execute([':id' => $id]);
         if (!$check->fetch()) {
             return JsonResponse::error($response, 'Challenge not found.', 404);
         }
 
         try {
+            // Composite PK (challenge_id, user_id) enforces uniqueness at the DB level
             $stmt = $this->db->prepare(
                 'INSERT INTO challenge_members (challenge_id, user_id) VALUES (:cid, :uid)'
             );
             $stmt->execute([':cid' => $id, ':uid' => $userId]);
         } catch (PDOException $e) {
-            // SQLSTATE 23000 = integrity constraint violation (duplicate unique key).
+            // SQLSTATE 23000 = integrity constraint violation (duplicate PK)
             if ((string) $e->getCode() === '23000') {
                 return JsonResponse::error($response, 'You have already joined this challenge.', 409);
             }
