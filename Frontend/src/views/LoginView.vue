@@ -19,7 +19,7 @@
 
       <p style="text-align: center; margin-top: 18px">
         New user?
-        <span class="success-text">Create account</span>
+        <RouterLink to="/register" class="success-text">Create account</RouterLink>
       </p>
     </section>
 
