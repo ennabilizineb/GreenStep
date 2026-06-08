@@ -12,7 +12,9 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 /**
  * Authentication: registration, login, JWT issuance.
- * This is the first end-to-end feature and the template the other controllers follow.
+ * Schema: users.role_id (FK → roles). Role name is resolved via JOIN so the
+ * JWT payload always carries the human-readable role string ('user'|'leader'|'admin'),
+ * keeping JwtAuthMiddleware unchanged.
  */
 final class AuthController
 {
@@ -23,7 +25,7 @@ final class AuthController
     ) {
     }
 
-    /** POST /api/auth/register  -> 201 Created */
+    /** POST /api/auth/register -> 201 Created */
     public function register(Request $request, Response $response): Response
     {
         $body = (array) $request->getParsedBody();
@@ -32,7 +34,6 @@ final class AuthController
         $email    = trim((string) ($body['email'] ?? ''));
         $password = (string) ($body['password'] ?? '');
 
-        // --- Server-side validation (never trust the client) ---
         if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 8) {
             return JsonResponse::error(
                 $response,
@@ -41,25 +42,33 @@ final class AuthController
             );
         }
 
-        // --- Reject duplicate email (prepared statement) ---
-        $check = $this->db->prepare('SELECT id FROM users WHERE email = :email LIMIT 1');
+        // Reject duplicate email
+        $check = $this->db->prepare('SELECT 1 FROM users WHERE email = :email LIMIT 1');
         $check->execute([':email' => $email]);
         if ($check->fetch()) {
             return JsonResponse::error($response, 'Email is already registered.', 409);
         }
 
-        // --- Hash with PHP default (bcrypt/Argon2), then persist ---
+        // Resolve the default 'user' role_id from the roles table
+        $roleStmt = $this->db->prepare('SELECT role_id FROM roles WHERE name = :name LIMIT 1');
+        $roleStmt->execute([':name' => 'user']);
+        $roleId = (int) ($roleStmt->fetchColumn() ?? 0);
+
+        if ($roleId === 0) {
+            return JsonResponse::error($response, 'Server configuration error: roles not seeded.', 500);
+        }
+
         $hash = password_hash($password, PASSWORD_DEFAULT);
 
         $insert = $this->db->prepare(
-            'INSERT INTO users (name, email, password_hash, role, joined_at)
-             VALUES (:name, :email, :hash, :role, NOW())'
+            'INSERT INTO users (role_id, name, email, password_hash, joined_at)
+             VALUES (:role_id, :name, :email, :hash, NOW())'
         );
         $insert->execute([
-            ':name'  => $name,
-            ':email' => $email,
-            ':hash'  => $hash,
-            ':role'  => 'user',
+            ':role_id' => $roleId,
+            ':name'    => $name,
+            ':email'   => $email,
+            ':hash'    => $hash,
         ]);
 
         return JsonResponse::success(
@@ -69,7 +78,7 @@ final class AuthController
         );
     }
 
-    /** POST /api/auth/login  -> 200 OK with JWT */
+    /** POST /api/auth/login -> 200 OK with JWT */
     public function login(Request $request, Response $response): Response
     {
         $body = (array) $request->getParsedBody();
@@ -81,13 +90,22 @@ final class AuthController
             return JsonResponse::error($response, 'Email and password are required.', 400);
         }
 
+        // JOIN roles to resolve the role name string for the JWT payload
         $stmt = $this->db->prepare(
-            'SELECT id, name, email, password_hash, role FROM users WHERE email = :email LIMIT 1'
+            'SELECT u.user_id       AS id,
+                    u.name,
+                    u.email,
+                    u.password_hash,
+                    r.name          AS role
+             FROM   users u
+             JOIN   roles r ON r.role_id = u.role_id
+             WHERE  u.email = :email
+             LIMIT  1'
         );
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
 
-        // Same generic message whether the email or the password is wrong (no user enumeration).
+        // Same generic message for wrong email or wrong password (prevents user enumeration)
         if (!$user || !password_verify($password, $user['password_hash'])) {
             return JsonResponse::error($response, 'Invalid credentials.', 401);
         }
