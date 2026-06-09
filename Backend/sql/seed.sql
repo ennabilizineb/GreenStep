@@ -48,12 +48,13 @@ INSERT INTO Activity_Type (category_id, name, unit, kg_co2_per_unit) VALUES
 --   { "type": "total_logs",    "threshold": N }
 --   { "type": "streak_days",   "threshold": N }
 --   { "type": "category_logs", "category": "<name>", "threshold": N }
+-- image_url uses empty string '' as placeholder (schema is NOT NULL; frontend treats '' as no image)
 INSERT INTO Badge (name, criteria_json, image_url) VALUES
-('Eco Beginner',  '{"type":"total_logs","threshold":1}',                               NULL),
-('Green Streak',  '{"type":"streak_days","threshold":7}',                              NULL),
-('Recycling Pro', '{"type":"category_logs","category":"recycling","threshold":10}',    NULL),
-('Carbon Cutter', '{"type":"streak_days","threshold":30}',                             NULL),
-('Eco Warrior',   '{"type":"total_logs","threshold":50}',                              NULL);
+('Eco Beginner',  '{"type":"total_logs","threshold":1}',                               ''),
+('Green Streak',  '{"type":"streak_days","threshold":7}',                              ''),
+('Recycling Pro', '{"type":"category_logs","category":"recycling","threshold":10}',    ''),
+('Carbon Cutter', '{"type":"streak_days","threshold":30}',                             ''),
+('Eco Warrior',   '{"type":"total_logs","threshold":50}',                              '');
 
 -- ── 6. Tips ───────────────────────────────────────────────────────────────────
 -- added_by = NULL means pre-seeded by the system (no admin account at seed time).
