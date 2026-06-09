@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Support\ChallengeProgress;
 use App\Support\JsonResponse;
 use PDO;
 use PDOException;
@@ -21,7 +22,10 @@ final class ChallengeController
     {
     }
 
-    /** GET /api/challenges -> list all challenges with member_count and is_joined */
+    /**
+     * GET /api/challenges -> list all challenges with member_count, is_joined, and
+     * collective progress (days_left, collective_saved_kg, progress_pct) for the cards.
+     */
     public function index(Request $request, Response $response): Response
     {
         $userId = (int) ($request->getAttribute('user')['sub'] ?? 0);
@@ -41,8 +45,81 @@ final class ChallengeController
              ORDER  BY c.start_date DESC'
         );
         $stmt->execute([':uid' => $userId]);
+        $rows = $stmt->fetchAll();
 
-        return JsonResponse::success($response, $stmt->fetchAll(), 200);
+        // Enrich each card with collective progress (one aggregate query per challenge;
+        // fine at project scale — the challenge list is short).
+        $progress = new ChallengeProgress($this->db);
+        foreach ($rows as &$row) {
+            $summary = $progress->summary(
+                (int) $row['id'],
+                (string) $row['start_date'],
+                (string) $row['end_date'],
+                (float) $row['target_co2_reduction']
+            );
+            $row['member_count']        = (int) $row['member_count'];
+            $row['is_joined']           = (int) $row['is_joined'];
+            $row['collective_saved_kg'] = $summary['collective_saved_kg'];
+            $row['progress_pct']        = $summary['progress_pct'];
+            $row['days_left']           = $summary['days_left'];
+        }
+        unset($row);
+
+        return JsonResponse::success($response, $rows, 200);
+    }
+
+    /** GET /api/challenges/{id} -> one challenge with progress + per-member leaderboard */
+    public function show(Request $request, Response $response, array $args): Response
+    {
+        $id = filter_var($args['id'] ?? null, FILTER_VALIDATE_INT);
+        if ($id === false) {
+            return JsonResponse::error($response, 'Invalid challenge ID.', 400);
+        }
+
+        $userId = (int) ($request->getAttribute('user')['sub'] ?? 0);
+
+        $stmt = $this->db->prepare(
+            'SELECT c.challenge_id                                                          AS id,
+                    c.name,
+                    c.description,
+                    c.start_date,
+                    c.end_date,
+                    c.target_co2_reduction,
+                    (SELECT COUNT(*) FROM `Challenge_Member` cm
+                      WHERE cm.challenge_id = c.challenge_id)                               AS member_count,
+                    (SELECT COUNT(*) FROM `Challenge_Member` cm
+                      WHERE cm.challenge_id = c.challenge_id AND cm.user_id = :uid)         AS is_joined
+             FROM   `Challenge` c
+             WHERE  c.challenge_id = :id
+             LIMIT  1'
+        );
+        $stmt->execute([':id' => $id, ':uid' => $userId]);
+        $challenge = $stmt->fetch();
+
+        if (!$challenge) {
+            return JsonResponse::error($response, 'Challenge not found.', 404);
+        }
+
+        $progress = new ChallengeProgress($this->db);
+        $summary  = $progress->summary(
+            (int) $challenge['id'],
+            (string) $challenge['start_date'],
+            (string) $challenge['end_date'],
+            (float) $challenge['target_co2_reduction']
+        );
+
+        $challenge['member_count']        = (int) $challenge['member_count'];
+        $challenge['is_joined']           = (int) $challenge['is_joined'];
+        $challenge['collective_saved_kg'] = $summary['collective_saved_kg'];
+        $challenge['progress_pct']        = $summary['progress_pct'];
+        $challenge['days_left']           = $summary['days_left'];
+        $challenge['leaderboard']         = $progress->leaderboard(
+            (int) $challenge['id'],
+            (string) $challenge['start_date'],
+            (string) $challenge['end_date']
+        );
+
+        return JsonResponse::success($response, $challenge, 200);
     }
 
     /** POST /api/challenges -> create (Community Leader) -> 201 */

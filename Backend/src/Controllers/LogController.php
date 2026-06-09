@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Support\BadgeEvaluator;
 use App\Support\JsonResponse;
 use PDO;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -216,87 +217,11 @@ final class LogController
         $challengeStmt->execute([':uid' => $userId]);
         $joinedChallenges = (int) $challengeStmt->fetchColumn();
 
-        // ── 5. Consecutive-day streak ─────────────────────────────────────────
-        $streakStmt = $this->db->prepare(
-            'SELECT DISTINCT DATE(logged_on) AS log_date
-             FROM   `Activity_Log`
-             WHERE  user_id = :uid
-             ORDER  BY log_date DESC'
-        );
-        $streakStmt->execute([':uid' => $userId]);
-        $loggedDates = $streakStmt->fetchAll(PDO::FETCH_COLUMN);
-
-        $streak   = 0;
-        $expected = new \DateTime('today');
-        foreach ($loggedDates as $dateStr) {
-            $day = new \DateTime($dateStr);
-            if ($day->format('Y-m-d') === $expected->format('Y-m-d')) {
-                $streak++;
-                $expected->modify('-1 day');
-            } elseif ($day < $expected) {
-                break;
-            }
-        }
-
-        // ── 6. Badge evaluation & auto-awarding ───────────────────────────────
-        $allBadgesStmt = $this->db->query(
-            'SELECT badge_id, name, criteria_json, image_url FROM `Badge`'
-        );
-        $allBadges = $allBadgesStmt->fetchAll();
-
-        $totalLogsStmt = $this->db->prepare(
-            'SELECT COUNT(*) FROM `Activity_Log` WHERE user_id = :uid'
-        );
-        $totalLogsStmt->execute([':uid' => $userId]);
-        $totalLogs = (int) $totalLogsStmt->fetchColumn();
-
-        $categoryLogCounts = [];
-        $catLogsStmt = $this->db->prepare(
-            'SELECT c.name AS category, COUNT(*) AS cnt
-             FROM   `Activity_Log` al
-             JOIN   `Activity_Type` at ON at.activity_type_id = al.activity_type_id
-             JOIN   `Category` c       ON c.category_id       = at.category_id
-             WHERE  al.user_id = :uid
-             GROUP  BY c.category_id'
-        );
-        $catLogsStmt->execute([':uid' => $userId]);
-        foreach ($catLogsStmt->fetchAll() as $row) {
-            $categoryLogCounts[$row['category']] = (int) $row['cnt'];
-        }
-
-        $earnedBadges = [];
-        foreach ($allBadges as $badge) {
-            $criteria = json_decode($badge['criteria_json'], true);
-            $earned   = false;
-
-            switch ($criteria['type'] ?? '') {
-                case 'total_logs':
-                    $earned = $totalLogs >= (int) $criteria['threshold'];
-                    break;
-                case 'streak_days':
-                    $earned = $streak >= (int) $criteria['threshold'];
-                    break;
-                case 'category_logs':
-                    $cat    = (string) ($criteria['category'] ?? '');
-                    $earned = ($categoryLogCounts[$cat] ?? 0) >= (int) $criteria['threshold'];
-                    break;
-            }
-
-            if ($earned) {
-                // INSERT IGNORE skips duplicate composite PK (badge_id, user_id) silently
-                $awardStmt = $this->db->prepare(
-                    'INSERT IGNORE INTO `User_Badge` (badge_id, user_id, awarded_on)
-                     VALUES (:bid, :uid, NOW())'
-                );
-                $awardStmt->execute([':bid' => $badge['badge_id'], ':uid' => $userId]);
-
-                $earnedBadges[] = [
-                    'badge_id'  => (int) $badge['badge_id'],
-                    'name'      => $badge['name'],
-                    'image_url' => $badge['image_url'],
-                ];
-            }
-        }
+        // ── 5 & 6. Streak + badge evaluation/awarding ─────────────────────────
+        // Shared with GET /api/badges via BadgeEvaluator so the rules live in one place.
+        $gamification = new BadgeEvaluator($this->db);
+        $streak       = $gamification->currentStreak($userId);
+        $earnedBadges = $gamification->evaluateAndAward($userId, $streak);
 
         return JsonResponse::success($response, [
             'today_kg_co2'      => $todayKg,
