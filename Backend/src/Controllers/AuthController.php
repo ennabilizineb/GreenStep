@@ -12,9 +12,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 /**
  * Authentication: registration, login, JWT issuance.
- * Schema: users.role_id (FK → roles). Role name is resolved via JOIN so the
- * JWT payload always carries the human-readable role string ('user'|'leader'|'admin'),
- * keeping JwtAuthMiddleware unchanged.
+ * Table names match the authoritative schema (PascalCase, Linux case-sensitive safe):
+ *   User, Role
  */
 final class AuthController
 {
@@ -42,15 +41,14 @@ final class AuthController
             );
         }
 
-        // Reject duplicate email
-        $check = $this->db->prepare('SELECT 1 FROM users WHERE email = :email LIMIT 1');
+        $check = $this->db->prepare('SELECT 1 FROM `User` WHERE email = :email LIMIT 1');
         $check->execute([':email' => $email]);
         if ($check->fetch()) {
             return JsonResponse::error($response, 'Email is already registered.', 409);
         }
 
-        // Resolve the default 'user' role_id from the roles table
-        $roleStmt = $this->db->prepare('SELECT role_id FROM roles WHERE name = :name LIMIT 1');
+        // Resolve the default 'user' role_id from the Role table
+        $roleStmt = $this->db->prepare('SELECT role_id FROM `Role` WHERE name = :name LIMIT 1');
         $roleStmt->execute([':name' => 'user']);
         $roleId = (int) ($roleStmt->fetchColumn() ?? 0);
 
@@ -61,7 +59,7 @@ final class AuthController
         $hash = password_hash($password, PASSWORD_DEFAULT);
 
         $insert = $this->db->prepare(
-            'INSERT INTO users (role_id, name, email, password_hash, joined_at)
+            'INSERT INTO `User` (role_id, name, email, password_hash, joined_at)
              VALUES (:role_id, :name, :email, :hash, NOW())'
         );
         $insert->execute([
@@ -90,22 +88,22 @@ final class AuthController
             return JsonResponse::error($response, 'Email and password are required.', 400);
         }
 
-        // JOIN roles to resolve the role name string for the JWT payload
+        // JOIN Role to resolve the role name string for the JWT payload
         $stmt = $this->db->prepare(
-            'SELECT u.user_id       AS id,
+            'SELECT u.user_id    AS id,
                     u.name,
                     u.email,
                     u.password_hash,
-                    r.name          AS role
-             FROM   users u
-             JOIN   roles r ON r.role_id = u.role_id
+                    r.name       AS role
+             FROM   `User` u
+             JOIN   `Role` r ON r.role_id = u.role_id
              WHERE  u.email = :email
              LIMIT  1'
         );
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
 
-        // Same generic message for wrong email or wrong password (prevents user enumeration)
+        // Same message for wrong email or password — prevents user enumeration
         if (!$user || !password_verify($password, $user['password_hash'])) {
             return JsonResponse::error($response, 'Invalid credentials.', 401);
         }

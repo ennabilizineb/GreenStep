@@ -7,6 +7,7 @@ namespace App\Routes;
 use App\Controllers\ActivityTypeController;
 use App\Controllers\AdminController;
 use App\Controllers\AuthController;
+use App\Controllers\BadgeController;
 use App\Controllers\ChallengeController;
 use App\Controllers\LogController;
 use App\Controllers\TipController;
@@ -44,6 +45,7 @@ final class Api
         $tips          = new TipController($db);
         $admin         = new AdminController($db);
         $activityTypes = new ActivityTypeController($db);
+        $badges        = new BadgeController($db);
 
         // --- Health check (handy for deployment verification) ---
         $app->get('/api/health', function ($req, $res) {
@@ -64,12 +66,16 @@ final class Api
         $app->put('/api/logs/{id}', [$logs, 'update'])->add(new JwtAuthMiddleware($jwt));
         $app->delete('/api/logs/{id}', [$logs, 'destroy'])->add(new JwtAuthMiddleware($jwt));
 
-        // --- Authenticated user: dashboard + tips ---
+        // --- Authenticated user: dashboard + tips + badge catalogue ---
         $app->get('/api/dashboard', [$logs, 'dashboard'])->add(new JwtAuthMiddleware($jwt));
         $app->get('/api/tips/daily', [$tips, 'daily'])->add(new JwtAuthMiddleware($jwt));
+        // Extends the PR1 contract: powers the "Badges -> View all" gamification screen.
+        $app->get('/api/badges', [$badges, 'index'])->add(new JwtAuthMiddleware($jwt));
 
-        // --- Challenges (CRUD #2): list/join = any user; create/edit/delete = leader ---
+        // --- Challenges (CRUD #2): list/detail/join = any user; create/edit/delete = leader ---
         $app->get('/api/challenges', [$challenge, 'index'])->add(new JwtAuthMiddleware($jwt));
+        // Extends the PR1 contract: challenge detail + collective-progress leaderboard.
+        $app->get('/api/challenges/{id}', [$challenge, 'show'])->add(new JwtAuthMiddleware($jwt));
         $app->post('/api/challenges/{id}/join', [$challenge, 'join'])->add(new JwtAuthMiddleware($jwt));
         $app->post('/api/challenges', [$challenge, 'store'])->add(new JwtAuthMiddleware($jwt, 'leader'));
         $app->put('/api/challenges/{id}', [$challenge, 'update'])->add(new JwtAuthMiddleware($jwt, 'leader'));

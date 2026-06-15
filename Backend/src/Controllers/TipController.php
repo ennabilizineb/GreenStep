@@ -11,11 +11,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 /**
  * Eco-tips shown to users. One randomised tip per call.
- * Admin-side curation of the tip library lives in AdminController.
- *
- * Schema notes (ERD-aligned):
- *   - tips.category_id is a FK to categories; category name resolved via LEFT JOIN
- *     (LEFT JOIN in case a tip has no category assigned).
+ * Table names match the authoritative schema (PascalCase, Linux case-sensitive safe):
+ *   Tip, Category
  */
 final class TipController
 {
@@ -27,13 +24,13 @@ final class TipController
     public function daily(Request $request, Response $response): Response
     {
         $stmt = $this->db->query(
-            'SELECT t.tip_id        AS id,
+            'SELECT t.tip_id   AS id,
                     t.title,
                     t.body,
-                    c.name          AS category,
+                    c.name     AS category,
                     t.source_url
-             FROM   tips t
-             LEFT   JOIN categories c ON c.category_id = t.category_id
+             FROM   `Tip` t
+             LEFT   JOIN `Category` c ON c.category_id = t.category_id
              ORDER  BY RAND()
              LIMIT  1'
         );
