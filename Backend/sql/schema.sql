@@ -1,7 +1,7 @@
 -- =============================================================================
 -- GreenStep Authoritative Schema — Aligned to the Finalised ER Diagram
 -- OWNERSHIP: Database & Security Lead (Rawan MohamedSalih Magzob — A24CS4066)
--- Table order respects FK dependency chains (Parents before Children).
+-- Table order respects FK dependency chains (Parents besysfore Children).
 -- Linux-ready Case-Sensitivity Aligned to Documentation.
 -- =============================================================================
 
