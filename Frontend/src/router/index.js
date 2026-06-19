@@ -5,6 +5,7 @@ import DailyLogView from '../views/DailyLogView.vue'
 import ChallengeView from '../views/ChallengeView.vue'
 import AdminDashboardView from '../views/AdminDashboardView.vue'
 import RegisterView from '../views/RegisterView.vue'
+import BadgesView from '../views/BadgesView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -16,6 +17,7 @@ const router = createRouter({
     { path: '/challenges', component: ChallengeView },
     { path: '/admin', component: AdminDashboardView },
     { path: '/register',component: RegisterView},
+    { path: '/badges', component: BadgesView},
   ],
 })
 

@@ -1,3 +1,31 @@
+<script setup>
+import{ handleError, ref } from 'vue'
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+
+const router=useRouter()
+const authoStore=useAuthStore()
+const email = ref('')
+const password=ref('')
+const error = ref('')
+const loading = ref('')
+
+async function handleLogin() {
+  error.value=''
+  loading.value=true
+
+try{
+  await authoStore.loginUser(email.value,password.value)
+  router.push('/dashboard')
+}catch (err){
+  error.value=err.message
+}finally{
+  loading.value=false
+}
+}
+</script>
+
+
 <template>
   <main class="mobile-page">
     <section style="text-align: center; margin-top: 70px; margin-bottom: 30px">
@@ -10,12 +38,16 @@
       <p class="subtitle">Log in to continue your eco journey.</p>
 
       <label class="label">Email</label>
-      <input class="input" type="email" placeholder="you@example.com" />
+      <input v-model="email" class ="input" type="email" placeholder="you@example.com"/>
 
       <label class="label">Password</label>
-      <input class="input" type="password" placeholder="Enter your password" />
+      <input v-model="password" class="input" type="password" placeholder="Enter your password"/>
 
-      <button class="btn" @click="$router.push('/dashboard')">Login</button>
+      <p v-if="error" style="color:red"> {{error }} </p>
+
+      <button class="btn" @click='handleLogin'>
+        {{ loading  ?'Logging in...' : 'Login' }}
+      </button>
 
       <p style="text-align: center; margin-top: 18px">
         New user?
