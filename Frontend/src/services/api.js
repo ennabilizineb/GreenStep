@@ -1,11 +1,11 @@
-const API_BASE_URL = 'http://localhost:8000'
+const API_BASE_URL = 'http://localhost:8080'
 function getToken(){
     return localStorage.getItem('token')
 }
 async function request(endpoint, options ={}) {
     const token=getToken()
 
-    const response = await fetch('${API_BASE_URL}${endpoint}',{
+    const response = await fetch(`${API_BASE_URL}${endpoint}`,{
         ...options,
         headers:{
             'Content-Type':'application/json',
@@ -13,7 +13,10 @@ async function request(endpoint, options ={}) {
             ...options.headers,
         },
     })
-    const result =  await response.json()
+    const text = await response.text()
+    const result= text ? JSON.parse(text):{}
+
+    //const result =  await response.json()
 
     if (!response.ok || result.success == false){
         throw new Error(result.error?.message||'API request failed')
