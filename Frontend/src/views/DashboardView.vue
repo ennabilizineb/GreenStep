@@ -1,3 +1,22 @@
+<script setup>
+import { onMounted, ref } from 'vue';
+import { getDashboard } from '@/services/api';
+
+const dashboard= ref(null)
+const error=ref('')
+const loading=ref(true)
+
+onMounted(async ()=>{
+  try{
+    dashboard.value =await getDashboard()
+  }catch(err){
+    error.value = err.message
+  }finally{
+    loading.value- false
+  }
+})
+</script>
+
 <template>
   <main class="mobile-page">
     <header class="mobile-header">
@@ -8,57 +27,47 @@
       <div>🔔</div>
     </header>
 
-    <section class="card green-card">
+    <p v-if = "loading"> Loading dashboard...</p>
+    <p v-if="error" style="color: red">{{ error }}</p>
+
+    <template v-if="dashboard">
+      <section class="card green-card">
       <p>Today’s Carbon Footprint</p>
-      <div class="stat-value">12.4 kg CO₂</div>
-      <p class="success-text">↓ 15% vs yesterday</p>
+      <div class="stat-value">{{ dashboard.today_kg_co2 }} kg CO2</div>
+      <p class="success-text">Yestrerday: {{ dashboard.yesterday_kg_co2 }} kg CO2</p>
     </section>
 
     <section class="card">
       <h3>Weekly Summary</h3>
       <div class="chart-bars">
         <div
-          v-for="item in weeklyBars"
-          :key="item.day"
+          v-for="item in dashboard.week|[]"
+          :key="item.date||item.day"
           class="bar"
-          :style="{ height: item.height + 'px' }"
-          :title="item.day"
+          :style="{ height: Math.max(20, item_kg_co2 * 8) + 'px'}"
         ></div>
       </div>
-      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #71806e">
-        <span v-for="item in weeklyBars" :key="item.day + '-label'">{{ item.day }}</span>
-      </div>
-    </section>
+      </section>
 
-    <section class="card">
-      <h3>Eco Tip 🌿</h3>
-      <p>Use public transport instead of driving to reduce your daily carbon footprint.</p>
-    </section>
+      <section class="card">
+        <h3> Your Progress</h3>
+        <p>🔥 {{dashboard.streak_days}}-day streak</p>
+        <p>🌱Joined {{ dashboard.joined_challenges }} chanllenges</p>
+      </section>
 
-    <section class="card">
-      <h3>Your Progress</h3>
-      <p>🔥 5-day streak</p>
-      <p>🏅 Eco Beginner Badge</p>
-      <p>🌱 Joined 3 challenges</p>
+      <section class="card">
+        <h3> Category Breakdown</h3>
+        <p v-for ="item in dashboard.by_category">
+          {{ item.category }}:{{ item.kg_co2 }}kg CO2
+        </p>
     </section>
+    </template>
 
     <nav class="bottom-nav">
       <RouterLink to="/dashboard">Home</RouterLink>
       <RouterLink to="/log">Log</RouterLink>
       <RouterLink to="/challenges">Challenges</RouterLink>
-      <RouterLink to="/admin">Admin</RouterLink>
+      <RouterLink to="/badges">Badges</RouterLink>
     </nav>
   </main>
 </template>
-
-<script setup>
-const weeklyBars = [
-  { day: 'Mon', height: 65 },
-  { day: 'Tue', height: 92 },
-  { day: 'Wed', height: 78 },
-  { day: 'Thu', height: 110 },
-  { day: 'Fri', height: 85 },
-  { day: 'Sat', height: 58 },
-  { day: 'Sun', height: 72 },
-]
-</script>
