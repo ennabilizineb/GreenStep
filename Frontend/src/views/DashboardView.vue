@@ -1,11 +1,12 @@
 <script setup>
-import { onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { onMounted, onActivated, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { watch } from 'vue'
 import { getDashboard } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
+const router = useRouter()
 const dashboard = ref(null)
 const error = ref('')
 const loading = ref(true)
@@ -23,7 +24,13 @@ async function fetchDashboard() {
   }
 }
 
+function logout() {
+  authStore.logout()
+  router.push('/login')
+}
+
 onMounted(fetchDashboard)
+onActivated(fetchDashboard)
 
 watch(() => route.path, (path) => {
   if (path === '/dashboard') fetchDashboard()
@@ -35,9 +42,16 @@ watch(() => route.path, (path) => {
     <header class="mobile-header">
       <div>
         <h2 style="margin: 0">Hello, {{ authStore.user?.name }}! 👋</h2>
-        <p class="subtitle">Let’s make today greener.</p>
+        <p class="subtitle">Let's make today greener.</p>
       </div>
-      <div>🔔</div>
+      <div style="display:flex; gap:10px; align-items:center">
+        <span>🔔</span>
+        <button
+          @click="logout"
+          style="background:none; border:none; color:#2f8f46; font-weight:700; cursor:pointer; font-size:13px">
+          Logout
+        </button>
+      </div>
     </header>
 
     <p v-if="loading">Loading dashboard...</p>

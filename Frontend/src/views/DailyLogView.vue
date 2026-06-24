@@ -1,7 +1,9 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { createLog, getActivityTypes } from '@/services/api'
+import { useRouter } from 'vue-router' 
 
+const router = useRouter()
 const activityTypes = ref([])
 const selectedTransport = ref('Bus')
 const transportDistance = ref(10)
@@ -92,6 +94,8 @@ async function submitLog() {
     await submitOneLog(recyclingActivity.value, recyclingAmount.value)
 
     successMessage.value = 'Activity log saved successfully.'
+
+    setTimeout(() => router.push('/dashboard'), 1000)
   } catch (err) {
     error.value = err.message
   } finally {
