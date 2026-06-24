@@ -9,7 +9,7 @@ async function request(endpoint, options = {}) {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer $ {token}' } : {}),
+      ...(token ? { Authorization: `Bearer $ {token}` } : {}),
       ...options.headers,
     },
   })
@@ -37,28 +37,28 @@ export async function register(name, email, password) {
 }
 
 export async function getDashboard() {
-  return request('api/dashboard')
+  return request('/api/dashboard')
 }
 export async function getActivityTypes() {
-  return request('api/activity-types')
+  return request('/api/activity-types')
 }
 export async function getLogs() {
-  return request('api/logs')
+  return request('/api/logs')
 }
 export async function createLog(payload) {
-  return request('api/logs', {
+  return request('/api/logs', {
     method: 'POST',
     body: JSON.stringify(payload),
   })
 }
 export async function getChallenges() {
-  return request('api/challenges')
+  return request('/api/challenges')
 }
 export async function joinChallenge(id) {
-  return request('api/challenges?${id}/join', {
+  return request('/api/challenges?${id}/join', {
     method: 'POST',
   })
 }
 export async function getBadges() {
-  return request('api/badges')
+  return request('/api/badges')
 }
