@@ -13,6 +13,13 @@ async function request(endpoint, options = {}) {
       ...options.headers,
     },
   })
+
+  if (response.status === 401) {
+    localStorage.clear()
+    window.location.href = '/login'
+    return
+  }
+
   const text = await response.text()
   const result = text ? JSON.parse(text) : {}
 

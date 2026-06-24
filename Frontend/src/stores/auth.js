@@ -18,13 +18,6 @@ export const useAuthStore = defineStore('auth', {
     },
     async registerUser(name, email, password) {
       const data = await register(name, email, password)
-      const token = data.token || data.access_token
-      if (token) {
-        this.token = token
-        this.user = data.user
-        localStorage.setItem('token', token)
-        localStorage.setItem('user', JSON.stringify(this.user))
-      }
       return data
     },
     logout() {

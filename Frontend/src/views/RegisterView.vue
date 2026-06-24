@@ -23,7 +23,7 @@ async function handleRegister() {
   loading.value = true
   try {
     await authStore.registerUser(name.value, email.value, password.value)
-    router.push('/dashboard')
+    router.push('/login')
   } catch (err) {
     error.value = err.message
   } finally {
