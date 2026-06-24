@@ -8,7 +8,7 @@ Stack: PHP 8.1+ · Slim 4 · PDO/MySQL · Firebase JWT.
 ## Project structure
 
 ```
-backend/
+Backend/
 ├── public/
 │   └── index.php            # single entry point (front controller)
 ├── config/
@@ -43,7 +43,7 @@ backend/
 ## Setup
 
 ```bash
-cd backend
+cd Backend
 composer install                 # restore dependencies into vendor/
 cp .env.example .env             # then edit .env with your DB + JWT secret
 php -r "echo bin2hex(random_bytes(32));"   # generate a JWT_SECRET, paste into .env
