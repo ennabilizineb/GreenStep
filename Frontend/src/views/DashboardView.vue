@@ -1,5 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { watch } from 'vue'
 import { getDashboard } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
@@ -7,8 +9,11 @@ const authStore = useAuthStore()
 const dashboard = ref(null)
 const error = ref('')
 const loading = ref(true)
+const route = useRoute()
 
-onMounted(async () => {
+async function fetchDashboard() {  
+  loading.value = true
+  error.value = ''
   try {
     dashboard.value = await getDashboard()
   } catch (err) {
@@ -16,6 +21,12 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+}
+
+onMounted(fetchDashboard)
+
+watch(() => route.path, (path) => {
+  if (path === '/dashboard') fetchDashboard()
 })
 </script>
 
