@@ -31,7 +31,10 @@ INSERT INTO Category (name, description) VALUES
 -- Required to satisfy the 'added_by' NOT NULL foreign key constraint in the Tip table.
 -- Password hash corresponds to a secure temporary password verified via password_verify()
 INSERT INTO `User` (`role_id`, `name`, `email`, `password_hash`, `joined_at`) VALUES
-(3, 'System Administrator', 'admin@greenstep.com', '$2y$10$e0myXaGBy5Wb88BBA9PhCOV5Z4F0Wf4L4v.V1W6TzA7bM6zV8x6t2', NOW()); -- user_id = 1
+(3, 'System Administrator', 'admin@greenstep.com', '$2y$10$e0myXaGBy5Wb88BBA9PhCOV5Z4F0Wf4L4v.V1W6TzA7bM6zV8x6t2', NOW()), -- user_id = 1
+(3, 'System Administrator 2', 'admin2@greenstep.com', '$2y$10$TEfT/Q3XaS2BAmLA5TUjOuihet3n3wUqfmdgeQPtcJhWOLxlikbem', NOW()),
+(2, 'System Leader', 'leader@greenstep.com', '$2y$10$TEfT/Q3XaS2BAmLA5TUjOuihet3n3wUqfmdgeQPtcJhWOLxlikbem', NOW()),
+(1, 'System Member', 'member@greenstep.com', '$2y$10$TEfT/Q3XaS2BAmLA5TUjOuihet3n3wUqfmdgeQPtcJhWOLxlikbem', NOW());
 -- ── 4. Activity Types ─────────────────────────────────────────────────────────
 -- Emission factors sourced from:
 --   DEFRA UK GHG Conversion Factors 2023 (transport, energy)

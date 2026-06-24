@@ -71,3 +71,13 @@ npm run format
 npm run dev
 ```
 ---
+
+---
+# Login Credentials Seed (To test the functionality!)
+
+## 1. In your Laragon Terminal:
+
+```bash
+php -r "echo password_hash('password', PASSWORD_DEFAULT);"
+```
+## 2. Go to HeidiSQL, run all the schemas in ./Backend/sql/
