@@ -126,3 +126,27 @@ INSERT INTO Tip (category_id, added_by, title, body, source_url) VALUES
 (4, 1, 'Carry a Reusable Bag and Bottle',
  'A reusable bag used 50 times offsets its production cost and eliminates the landfill burden of single-use plastics entirely.',
  NULL);
+
+INSERT INTO `Challenge` 
+    (`challenge_id`, `name`, `description`, `start_date`, `end_date`, `target_co2_reduction`) 
+VALUES
+    (1, 
+     'Eco-Commuter Sprint', 
+     'Commute entirely via public transit, cycling, or walking for 7 consecutive days to lower your transit footprint.', 
+     '2026-07-01', 
+     '2026-07-07', 
+     15.50),
+     
+    (2, 
+     'Green Plate Week', 
+     'Swap out high-emission red meat meals for purely plant-based or vegetarian choices to curb dietary emissions.', 
+     '2026-07-12', 
+     '2026-07-19', 
+     22.30),
+     
+    (3, 
+     'Power Down Campus', 
+     'Cut daily electricity consumption by unplugging standby electronics and minimizing air conditioning runtime.', 
+     '2026-08-01', 
+     '2026-08-15', 
+     45.00);
