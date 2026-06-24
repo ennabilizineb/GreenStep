@@ -5,9 +5,9 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const activityTypes = ref([])
-const selectedTransport = ref('Bus')
+const selectedTransport = ref('Public Transport')
 const transportDistance = ref(10)
-const selectedMeal = ref('Mixed')
+const selectedMeal = ref('Mixed Meal')
 const mealAmount = ref(1)
 const electricityAmount = ref(5)
 const recyclingAmount = ref(3)
@@ -20,21 +20,21 @@ const error = ref('')
 const successMessage = ref('')
 
 const transportOptions = [
-  { label: 'Walk', icon: '🚶' },
-  { label: 'Bike', icon: '🚲' },
-  { label: 'Bus', icon: '🚌' },
+  { label: 'Walking', icon: '🚶' },
+  { label: 'Cycling', icon: '🚲' },
+  { label: 'Public Transport', icon: '🚌' },
   { label: 'Car', icon: '🚗' },
 ]
 
 const mealOptions = [
-  { label: 'Vegetarian', icon: '🥦' },
-  { label: 'Mixed', icon: '🍱' },
-  { label: 'Red Meat', icon: '🥩' },
+  { label: 'Vegetarian Meal', icon: '🥦' },
+  { label: 'Mixed Meal', icon: '🍱' },
+  { label: 'Red Meat Meal', icon: '🥩' },
 ]
 
 function findActivityType(keyword, categoryKeyword = '') {
   return activityTypes.value.find((activity) => {
-    const name = String(activity.activity_name || '').toLowerCase()
+    const name = String(activity.name || '').toLowerCase()
     const category = String(activity.category || '').toLowerCase()
 
     return (

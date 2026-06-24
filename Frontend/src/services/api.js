@@ -62,7 +62,7 @@ export async function getChallenges() {
   return request('/api/challenges')
 }
 export async function joinChallenge(id) {
-  return request('/api/challenges/${id}/join', {
+  return request(`/api/challenges/${id}/join`, {
     method: 'POST',
   })
 }
