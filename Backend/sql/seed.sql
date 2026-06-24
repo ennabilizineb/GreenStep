@@ -4,11 +4,21 @@
 
 USE greenstep;
 
+-- Clear existing data to prevent Duplicate Entry (1062) errors on re-runs
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE `Tip`;
+TRUNCATE TABLE `Badge`;
+TRUNCATE TABLE `Activity_Type`;
+TRUNCATE TABLE `User`;
+TRUNCATE TABLE `Category`;
+TRUNCATE TABLE `role`;
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- ── 1. Roles ──────────────────────────────────────────────────────────────────
-INSERT INTO Role (name) VALUES
-('user'),      -- role_id = 1 : standard end-user
-('leader'),    -- role_id = 2 : community / group leader
-('admin');     -- role_id = 3 : platform administrator
+INSERT INTO role (role_id, name) VALUES
+(1, 'user'),      -- role_id = 1 : standard end-user
+(2, 'leader'),    -- role_id = 2 : community / group leader
+(3, 'admin');     -- role_id = 3 : platform administrator
 
 -- ── 2. Categories ─────────────────────────────────────────────────────────────
 INSERT INTO Category (name, description) VALUES
@@ -48,7 +58,7 @@ INSERT INTO Activity_Type (category_id, name, unit, kg_co2_per_unit) VALUES
 --   { "type": "total_logs",    "threshold": N }
 --   { "type": "streak_days",   "threshold": N }
 --   { "type": "category_logs", "category": "<name>", "threshold": N }
-<<<<<<< HEAD
+-- <<<<<<< HEAD
 -- ── 5. Populate Badges ───────────────────────────────────────────────────────
 INSERT INTO `Badge` (`name`, `criteria_json`, `image_url`) VALUES
 ('Eco Beginner',  '{"type":"total_logs","threshold":1}',                     '/assets/badges/eco_beginner.png'),
@@ -56,21 +66,20 @@ INSERT INTO `Badge` (`name`, `criteria_json`, `image_url`) VALUES
 ('Recycling Pro', '{"type":"category_logs","category":"recycling","threshold":10}', '/assets/badges/recycling_pro.png'),
 ('Carbon Cutter', '{"type":"streak_days","threshold":30}',                   '/assets/badges/carbon_cutter.png'),
 ('Eco Warrior',   '{"type":"total_logs","threshold":50}',                    '/assets/badges/eco_warrior.png');
-=======
+
 -- image_url uses empty string '' as placeholder (schema is NOT NULL; frontend treats '' as no image)
 INSERT INTO Badge (name, criteria_json, image_url) VALUES
 ('Eco Beginner',  '{"type":"total_logs","threshold":1}',                               ''),
 ('Green Streak',  '{"type":"streak_days","threshold":7}',                              ''),
 ('Recycling Pro', '{"type":"category_logs","category":"recycling","threshold":10}',    ''),
 ('Carbon Cutter', '{"type":"streak_days","threshold":30}',                             ''),
-('Eco Warrior',   '{"type":"total_logs","threshold":50}',                              '');
+('Eco Warrior',   '{"type":"total_logs","threshold":50}',                              ''),
 ('Eco Beginner',  '{"type":"total_logs","threshold":1}',                               ''),
 ('Green Streak',  '{"type":"streak_days","threshold":7}',                              ''),
 ('Recycling Pro', '{"type":"category_logs","category":"recycling","threshold":10}',    ''),
 ('Carbon Cutter', '{"type":"streak_days","threshold":30}',                             ''),
 ('Eco Warrior',   '{"type":"total_logs","threshold":50}',                              '');
 
->>>>>>> d11e5d3a2359664178dbfa6d3d6f1af292d41374
 -- ── 6. Tips ───────────────────────────────────────────────────────────────────
 -- added_by = NULL means pre-seeded by the system (no admin account at seed time).
 -- Admins can add more via POST /api/admin/tips.
