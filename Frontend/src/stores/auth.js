@@ -4,7 +4,7 @@ import { login, register } from '../services/api'
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: localStorage.getItem('token') || null,
-    user: JSON.parse(localStorage.getItem('user') || null),
+    user: JSON.parse(localStorage.getItem('user')) || null,
   }),
   actions: {
     async loginUser(email, password) {
@@ -21,9 +21,9 @@ export const useAuthStore = defineStore('auth', {
       const token = data.token || data.access_token
       if (token) {
         this.token = token
-        this.user = user
+        this.user = data.user
         localStorage.setItem('token', token)
-        localStorage.setItem('user', JSON.parse(this.user))
+        localStorage.setItem('user', JSON.stringify(this.user))
       }
       return data
     },
