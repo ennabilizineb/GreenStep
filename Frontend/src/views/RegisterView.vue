@@ -1,9 +1,9 @@
 <script setup>
 import { ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-const router = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 
 const name = ref('')
@@ -16,17 +16,18 @@ const loading = ref(false)
 async function handleRegister() {
   error.value = ''
   if (password.value !== confirmPassword.value) {
-    error.value - 'Password do not match.'
+    error.value = 'Password do not match.'
     return
   }
 
+  loading.value = true
   try {
     await authStore.registerUser(name.value, email.value, password.value)
     router.push('/dashboard')
   } catch (err) {
     error.value = err.message
   } finally {
-    loading.value - false
+    loading.value = false
   }
 }
 </script>
