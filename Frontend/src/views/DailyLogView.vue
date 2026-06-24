@@ -1,21 +1,21 @@
 <script setup>
-import { computed,onMounted, ref } from 'vue'
-import { createLog,getActivityTypes } from '@/services/api';
+import { computed, onMounted, ref } from 'vue'
+import { createLog, getActivityTypes } from '@/services/api'
 
-const activityTypes=ref ([])
+const activityTypes = ref([])
 const selectedTransport = ref('Bus')
-const transportDistance= ref(10)
+const transportDistance = ref(10)
 const selectedMeal = ref('Mixed')
-const mealAmount =ref(1)
-const electricityAmount= ref(5)
-const recyclingAmount=ref(3)
+const mealAmount = ref(1)
+const electricityAmount = ref(5)
+const recyclingAmount = ref(3)
 
-const loggedOn= ref(new Date().toISOString().slice(0,10))
+const loggedOn = ref(new Date().toISOString().slice(0, 10))
 
-const loading=ref(true)
-const saving=ref(false)
-const error=ref('')
-const successMessage=ref('')
+const loading = ref(true)
+const saving = ref(false)
+const error = ref('')
+const successMessage = ref('')
 
 const transportOptions = [
   { label: 'Walk', icon: '🚶' },
@@ -30,15 +30,15 @@ const mealOptions = [
   { label: 'Red Meat', icon: '🥩' },
 ]
 
-function findActivityType(keyword, categoryKeyword=''){
+function findActivityType(keyword, categoryKeyword = '') {
   return activityTypes.value.find((activity) => {
-    const name=String(activity.activity_name ||'').toLowerCase()
-    const category=String(activity.category || '').toLowerCase()
+    const name = String(activity.activity_name || '').toLowerCase()
+    const category = String(activity.category || '').toLowerCase()
 
-    return(
+    return (
       name.includes(keyword.toLowerCase()) &&
       (!categoryKeyword || category.includes(categoryKeyword.toLowerCase()))
-  )
+    )
   })
 }
 
@@ -58,23 +58,23 @@ const recyclingActivity = computed(() => {
   return findActivityType('recycling')
 })
 
-onMounted(async () =>{
+onMounted(async () => {
   try {
     activityTypes.value = await getActivityTypes()
-  }catch(err){
-    error.value=err.message
-  }finally{
-    loading.value=false
+  } catch (err) {
+    error.value = err.message
+  } finally {
+    loading.value = false
   }
 })
 
-async function submitOneLog(activityType,amount) {
-  if (!activityType || !amount || Number(amount) <= 0){
+async function submitOneLog(activityType, amount) {
+  if (!activityType || !amount || Number(amount) <= 0) {
     return
   }
-  
+
   await createLog({
-    activity_type_id:activityType.id,
+    activity_type_id: activityType.id,
     amount: Number(amount),
     logged_on: loggedOn.value,
   })
@@ -91,14 +91,13 @@ async function submitLog() {
     await submitOneLog(electricityActivity.value, electricityAmount.value)
     await submitOneLog(recyclingActivity.value, recyclingAmount.value)
 
-    successMessage.value='Activity log saved successfully.'
-  }catch(err){
-    error.value=err.message
-  }finally{
-    saving.value=false
+    successMessage.value = 'Activity log saved successfully.'
+  } catch (err) {
+    error.value = err.message
+  } finally {
+    saving.value = false
   }
 }
-
 </script>
 
 <template>
@@ -109,24 +108,24 @@ async function submitLog() {
         <p class="subtitle">Record today's eco activities.</p>
       </div>
     </header>
-    
+
     <p v-if="loading">Loading activity types...</p>
-    <p v-if="error" style="color:red">{{ error }}</p>
+    <p v-if="error" style="color: red">{{ error }}</p>
 
     <section class="card">
       <h3>Transport</h3>
       <div class="option-grid">
         <div
-        v-for="option in transportOptions"
-        :key="option.label"
-        class="activity-option"
-        :class="{ active: selectedTransport===option.label}"
-        @click="selectedTransport=option.label"
+          v-for="option in transportOptions"
+          :key="option.label"
+          class="activity-option"
+          :class="{ active: selectedTransport === option.label }"
+          @click="selectedTransport = option.label"
         >
-        <div class="icon-bubble">{{ option.icon }}</div>
-        <span>{{ option.label }}</span>
+          <div class="icon-bubble">{{ option.icon }}</div>
+          <span>{{ option.label }}</span>
+        </div>
       </div>
-    </div>
 
       <label class="label">Distance (km)</label>
       <input v-model="transportDistance" class="input" type="number" />
@@ -137,14 +136,14 @@ async function submitLog() {
 
       <div class="option-grid">
         <div
-        v-for="option in mealOptions"
-        :key="option.label"
-        class="activity-option"
-        :class="{active: selectedMeal === option.label}"
-        @click="selectedMeal = option.label"
+          v-for="option in mealOptions"
+          :key="option.label"
+          class="activity-option"
+          :class="{ active: selectedMeal === option.label }"
+          @click="selectedMeal = option.label"
         >
-        <div class="icon-bubble">{{ option.icon }}</div>
-        <span>{{ option.label }}</span>
+          <div class="icon-bubble">{{ option.icon }}</div>
+          <span>{{ option.label }}</span>
         </div>
       </div>
       <label class="label">Meal Amount</label>
@@ -159,7 +158,7 @@ async function submitLog() {
 
     <section class="card">
       <h3>Recycling</h3>
-      <label class="label">Recycled Items</label> 
+      <label class="label">Recycled Items</label>
       <input v-model="recyclingAmount" class="input" type="number" />
     </section>
 
@@ -169,7 +168,7 @@ async function submitLog() {
     </section>
 
     <button class="btn" @click="submitLog">
-      {{saving ? 'Saving...' :'Calculate & Save'}}
+      {{ saving ? 'Saving...' : 'Calculate & Save' }}
     </button>
 
     <section v-if="successMessage" class="card green-card" style="margin-top: 16px">

@@ -16,8 +16,8 @@ const router = createRouter({
     { path: '/log', component: DailyLogView },
     { path: '/challenges', component: ChallengeView },
     { path: '/admin', component: AdminDashboardView },
-    { path: '/register',component: RegisterView},
-    { path: '/badges', component: BadgesView},
+    { path: '/register', component: RegisterView },
+    { path: '/badges', component: BadgesView },
   ],
 })
 

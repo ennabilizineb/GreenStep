@@ -52,22 +52,21 @@ Frontend/
 ---
 # Project Setup
 
-## Install Dependencies
+## 1. Install Dependencies
 
 ```bash
 npm install
 ```
 
-## Run Development Server
-
-```bash
-npm run dev
-```
-
-## Format Project
+## 2. Format Project
 
 ```bash
 npm run format
 ```
 
+## 3. Run Development Server
+
+```bash
+npm run dev
+```
 ---

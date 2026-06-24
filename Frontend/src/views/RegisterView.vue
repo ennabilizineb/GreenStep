@@ -1,36 +1,35 @@
 <script setup>
-import {ref} from 'vue'
-import { useRoute } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
+import { ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
-const router =useRoute()
-const authStore= useAuthStore()
+const router = useRoute()
+const authStore = useAuthStore()
 
 const name = ref('')
-const email =ref('')
-const password=ref('')
-const confirmPassword =ref('')
-const error= ref('')
+const email = ref('')
+const password = ref('')
+const confirmPassword = ref('')
+const error = ref('')
 const loading = ref(false)
 
 async function handleRegister() {
-  error.value=''
-  if (password.value !== confirmPassword.value){
-    error.value-'Password do not match.'
+  error.value = ''
+  if (password.value !== confirmPassword.value) {
+    error.value - 'Password do not match.'
     return
   }
 
-  try{
-    await authStore.registerUser(name.value,email.value,password.value)
+  try {
+    await authStore.registerUser(name.value, email.value, password.value)
     router.push('/dashboard')
-  }catch (err){
-    error.value=err.message
-  }finally{
-    loading.value-false
+  } catch (err) {
+    error.value = err.message
+  } finally {
+    loading.value - false
   }
 }
 </script>
-
 
 <template>
   <main class="mobile-page">
@@ -38,7 +37,7 @@ async function handleRegister() {
       <h1 class="brand-title">🌱 GreenStep</h1>
       <p class="subtitle">Create your account</p>
     </section>
-    
+
     <section class="card">
       <h2>Sign Up</h2>
 
@@ -52,7 +51,12 @@ async function handleRegister() {
       <input v-model="password" class="input" type="password" placeholder="Create a password" />
 
       <label class="label">Confirm Password</label>
-      <input v-model="confirmPassword" class="input" type="password" placeholder="Confirm password" />
+      <input
+        v-model="confirmPassword"
+        class="input"
+        type="password"
+        placeholder="Confirm password"
+      />
 
       <p v-if="error" style="color: red">{{ error }}</p>
 
