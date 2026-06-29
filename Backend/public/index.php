@@ -1,12 +1,13 @@
 <?php
 
 declare(strict_types=1);
-
-use App\Database\Database;
+// This is the entry point for all HTTP requests. 
+//It is the only file that is publicly accessible.
+use App\Database\Database; // 
 use App\Middleware\CorsMiddleware;
 use App\Routes\Api;
 use App\Support\JsonErrorHandler;
-use Dotenv\Dotenv;
+use Dotenv\Dotenv; // a tool to read the secrets from .env files and put them into $_ENV
 use Slim\Factory\AppFactory;
 
 require __DIR__ . '/../vendor/autoload.php';

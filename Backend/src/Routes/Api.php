@@ -16,8 +16,7 @@ use PDO;
 use Slim\App;
 
 /**
- * Defines every route. This file IS the API contract from the proposal (Section III.2),
- * expressed in code. Read top-to-bottom it doubles as living documentation.
+ *  API contract from the proposal (Section III.2),
  *
  * Role gates:
  *   (none)            -> public
