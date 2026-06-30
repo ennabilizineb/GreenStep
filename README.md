@@ -150,7 +150,7 @@ The platform implements a robust defense-in-depth model:
 Access levels are managed at the routing layer via a custom `JwtAuthMiddleware` firewall:
 
 | Role Level | Access Permissions |
-| :--- | :--- |
+| :--------- | :----------------- |
 | **Public** | Login (`/api/auth/login`) & Registration (`/api/auth/register`). |
 | **Standard User** | Can log activities, view dashboards, fetch daily tips, and join community challenges. |
 | **Community Leader** | Inherits User permissions + Create, Update, or Delete community challenges. |
@@ -160,7 +160,7 @@ Access levels are managed at the routing layer via a custom `JwtAuthMiddleware` 
 
 ## 8. Team Contributions
 
-* **Mohammed Alsakkaf:** (Backend Lead) Backend Infrastructure, Core Rest API Framework & Active Controller Development.
-* **Ennabili Zineb:** (Database & Security Lead) Database Normalization, Automated Deployment/Seed Scripting, PDO Connection Hardening, and Security Architecture.
-* **Rawan MohameSalih:** (Security & Database Lead) Authoritative Database Schema Engineering and Final Layout Inspections.
-* **Zengliting:** (Frontend Lead) User Interface Design, Vue 3 Architecture, State Retention, and API Consumer Integration.
+- **Mohammed Alsakkaf:** (Backend Lead) Backend Infrastructure, Core REST API Framework & Active Controller Development.
+- **Ennabili Zineb:** (Database & Security Lead) Database Normalization, Automated Deployment/Seed Scripting, PDO Connection Hardening, and Security Architecture.
+- **Rawan MohameSalih:** (Security & Database Lead) Authoritative Database Schema Engineering and Final Layout Inspections.
+- **Zengliting:** (Frontend Lead) User Interface Design, Vue 3 Architecture, State Retention, and API Consumer Integration.
