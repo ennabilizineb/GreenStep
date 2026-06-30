@@ -106,6 +106,8 @@ GreenStep-Repository/
 │    │   ├── views/                      # Full layout dashboard pages mapped directly to route paths
 │    │   │   ├── AdminDashboard.vue      # Specialized view for administrative overrides
 │    │   │   ├── ChallengesView.vue      # Interface for checking and joining group challenges
+│    │   │   ├── DailyLogView.vue
+# Records daily activities for carbon footprint calculation
 │    │   │   ├── DashboardView.vue       # Primary workspace tracking metrics and carbon summaries
 │    │   │   ├── LoginView.vue           # Authentication gateway interface
 │    │   │   └── RegisterView.vue        # New user sign-up panel
@@ -118,6 +120,7 @@ GreenStep-Repository/
 │
 │
 └── SECURITY.md
+```
 
 ---
 
