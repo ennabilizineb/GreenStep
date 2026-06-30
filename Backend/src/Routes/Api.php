@@ -75,7 +75,6 @@ final class Api
         // 6. I register the activity types route so the frontend can populate the log form dropdown.
         $app->get('/api/activity-types', [$activityTypes, 'index'])->add(new JwtAuthMiddleware($jwt));
 
-
         // 7. I register the full CRUD for activity logs.
         // GET = list my logs, POST = create a new log, PUT = edit a log, DELETE = remove a log.
         $app->get('/api/logs', [$logs, 'index'])->add(new JwtAuthMiddleware($jwt));
@@ -104,15 +103,16 @@ final class Api
         $app->get('/api/challenges/{id}', [$challenge, 'show'])->add(new JwtAuthMiddleware($jwt));
         // 12. I register the join route - adds the user to the Challenge_Member table.
         $app->post('/api/challenges/{id}/join', [$challenge, 'join'])->add(new JwtAuthMiddleware($jwt));
+        
+
+        
+        //Role-Based Access Control
         // 13. I register the leader-only routes for managing challenges.
         // The second argument 'leader' tells the middleware to also check the role claim inside the JWT.
         $app->post('/api/challenges', [$challenge, 'store'])->add(new JwtAuthMiddleware($jwt, 'leader'));
         $app->put('/api/challenges/{id}', [$challenge, 'update'])->add(new JwtAuthMiddleware($jwt, 'leader'));
         $app->delete('/api/challenges/{id}', [$challenge, 'destroy'])->add(new JwtAuthMiddleware($jwt, 'leader'));
-
-
-
-
+        //-------------------------
         // --((Admin-only routes: only accounts with role = 'admin' can reach these.))
         // 14. I register the admin routes for managing the tip library and CO2 emission factors.
         // The 'admin' argument means only admin-role JWT tokens are accepted here.
@@ -120,8 +120,15 @@ final class Api
         $app->get('/api/admin/factors', [$admin, 'listFactors'])->add(new JwtAuthMiddleware($jwt, 'admin'));
         $app->put('/api/admin/factors/{id}', [$admin, 'updateFactor'])->add(new JwtAuthMiddleware($jwt, 'admin'));
 
-        // 15. I register a catch-all OPTIONS route to answer CORS preflight requests from the browser.
-        // The browser sends an OPTIONS request before every cross-origin POST/PUT/DELETE to check permissions.
+
+
+
+
+        // catch-all OPTIONS Route for CORS preflight requests
+        // to prevent from CORS errors during Cross-origin communication.
+        // 15. I register this route to handle CORS preflight requests from the browser.
+        // This is needed because the frontend is on a different port than the backend,
+        //  so the browser enforces CORS.
         $app->options('/{routes:.+}', fn ($req, $res) => $res);
     }
 }
