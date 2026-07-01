@@ -69,3 +69,12 @@ export async function joinChallenge(id) {
 export async function getBadges() {
   return request('/api/badges')
 }
+export async function getFactors() {
+  return request('/api/admin/factors')
+}
+export async function updateFactor(id, kg_co2_per_unit) {
+  return request(`/api/admin/factors/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ kg_co2_per_unit }),
+  })
+}

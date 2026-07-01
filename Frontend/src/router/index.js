@@ -37,24 +37,23 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from) => {
   const authStore = useAuthStore()
   const isLoggedIn = !!authStore.token
   const isAdmin = authStore.user?.role === 'admin'
 
   const protectedPaths = ['/dashboard', '/admin', '/log', '/challenges', '/badges']
 
-  // Block logged-out users from any protected page
-  const isProtected = protectedPrefixes.some((prefix) => to.path.startsWith(prefix))
+  const isProtected = protectedPaths.some((prefix) => to.path.startsWith(prefix))
   if (isProtected && !isLoggedIn) {
-    return next('/login')
+    return '/login'
   }
 
   if (to.path.startsWith('/admin') && !isAdmin) {
-    return next('/dashboard')
+    return '/dashboard'
   }
 
-  next()
+  return true
 })
 
 export default router
