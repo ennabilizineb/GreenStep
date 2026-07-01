@@ -12,7 +12,7 @@ const error = ref('')
 const loading = ref(true)
 const route = useRoute()
 
-async function fetchDashboard() {  
+async function fetchDashboard() {
   loading.value = true
   error.value = ''
   try {
@@ -44,14 +44,11 @@ watch(() => route.path, (path) => {
         <h2 style="margin: 0">Hello, {{ authStore.user?.name }}! 👋</h2>
         <p class="subtitle">Let's make today greener.</p>
       </div>
-      <div style="display:flex; gap:10px; align-items:center">
-        <span>🔔</span>
-        <button
-          @click="logout"
-          style="background:none; border:none; color:#2f8f46; font-weight:700; cursor:pointer; font-size:13px">
-          Logout
-        </button>
-      </div>
+      <button
+        @click="logout"
+        style="background:#fde8e8; color:#c62828; border:none; padding:8px 14px; border-radius:12px; font-weight:700; cursor:pointer; font-size:13px;">
+        Logout
+      </button>
     </header>
 
     <p v-if="loading">Loading dashboard...</p>

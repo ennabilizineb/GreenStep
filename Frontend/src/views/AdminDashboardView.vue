@@ -93,15 +93,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onActivated, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { getAdminStats } from '@/services/api'
 import AdminSidebar from '@/components/AdminSidebar.vue'
 
+const route = useRoute()
 const stats = ref(null)
 const loading = ref(true)
 const searchQuery = ref('')
 
-onMounted(async () => {
+async function fetchStats() {
+  loading.value = true
   try {
     stats.value = await getAdminStats()
   } catch (err) {
@@ -109,6 +112,12 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+}
+
+onMounted(fetchStats)
+onActivated(fetchStats)
+watch(() => route.path, (path) => {
+  if (path === '/admin') fetchStats()
 })
 
 const chartHeights = computed(() => {
