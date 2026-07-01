@@ -12,6 +12,7 @@ use App\Controllers\ChallengeController;
 use App\Controllers\LogController;
 use App\Controllers\TipController;
 use App\Controllers\UserController;
+use App\Controllers\SettingsController;
 use App\Middleware\JwtAuthMiddleware;
 use PDO;
 use Slim\App;
@@ -48,6 +49,7 @@ final class Api
         $activityTypes = new ActivityTypeController($db);
         $badges        = new BadgeController($db);
         $users         = new UserController($db);
+        $settings = new SettingsController($db);
 
         // --- Health check (handy for deployment verification) ---
         $app->get('/api/health', function ($req, $res) {
@@ -94,7 +96,12 @@ final class Api
         $app->put('/api/admin/users/{id}/role', [$users, 'updateRole'])->add(new JwtAuthMiddleware($jwt, 'admin'));
         $app->put('/api/admin/users/{id}/status', [$users, 'updateStatus'])->add(new JwtAuthMiddleware($jwt, 'admin'));
         $app->delete('/api/admin/users/{id}', [$users, 'destroy'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        // --- Public: site branding + maintenance status (needed on login page, no auth) ---
+        $app->get('/api/settings/public', [$settings, 'publicSettings']);
 
+        // --- Administrator: settings ---
+        $app->get('/api/admin/settings', [$settings, 'index'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->put('/api/admin/settings', [$settings, 'update'])->add(new JwtAuthMiddleware($jwt, 'admin'));
         // --- CORS preflight: answer OPTIONS for any path ---
         $app->options('/{routes:.+}', fn ($req, $res) => $res);
     }

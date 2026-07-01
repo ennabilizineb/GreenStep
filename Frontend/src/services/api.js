@@ -149,3 +149,15 @@ export async function updateUserStatus(id, is_active) {
 export async function deleteUser(id) {
   return request(`/api/admin/users/${id}`, { method: 'DELETE' })
 }
+export async function getPublicSettings() {
+  return request('/api/settings/public')
+}
+export async function getAdminSettings() {
+  return request('/api/admin/settings')
+}
+export async function updateAdminSettings(payload) {
+  return request('/api/admin/settings', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}

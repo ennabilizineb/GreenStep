@@ -1,7 +1,8 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { getPublicSettings } from '@/services/api'
 import '../assets/main.css'
 
 const router = useRouter()
@@ -10,6 +11,8 @@ const email = ref('')
 const password = ref('')
 const error = ref('')
 const loading = ref('')
+const siteName = ref('GreenStep')
+const maintenanceMode = ref(false)
 
 async function handleLogin() {
   error.value = ''
@@ -28,16 +31,28 @@ async function handleLogin() {
     loading.value = false
   }
 }
+
+onMounted(async () => {
+  try {
+    const settings = await getPublicSettings()
+    siteName.value = settings.site_name
+    maintenanceMode.value = settings.maintenance_mode
+  } catch (err) {
+    console.error('Failed to load site settings:', err)
+  }
+})
 </script>
 
 <template>
   <main class="mobile-page">
     <section style="text-align: center; margin-top: 70px; margin-bottom: 30px">
-      <h1 class="brand-title">🌱 GreenStep</h1>
-      <p class="subtitle">Track. Reduce. Inspire.</p>
+      <h1 class="brand-title">🌱 {{ siteName }}</h1>      <p class="subtitle">Track. Reduce. Inspire.</p>
     </section>
 
     <section class="card">
+      <p v-if="maintenanceMode" style="background:#fff4e5; color:#b76e00; padding:12px; border-radius:12px; font-weight:700; text-align:center; margin-bottom:16px;">
+        ⚠️ The site is under maintenance. Only administrators can log in right now.
+      </p>
       <h2>Welcome Back</h2>
       <p class="subtitle">Log in to continue your eco journey.</p>
 

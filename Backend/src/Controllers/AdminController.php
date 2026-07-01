@@ -101,14 +101,16 @@ final class AdminController
             return JsonResponse::error($response, 'Valid factor id and numeric kg_co2_per_unit are required.', 400);
         }
 
+        $exists = $this->db->prepare('SELECT 1 FROM `Activity_Type` WHERE activity_type_id = :id LIMIT 1');
+        $exists->execute([':id' => $id]);
+        if (!$exists->fetch()) {
+            return JsonResponse::error($response, 'Emission factor not found.', 404);
+        }
+
         $stmt = $this->db->prepare(
             'UPDATE `Activity_Type` SET kg_co2_per_unit = :v WHERE activity_type_id = :id'
         );
         $stmt->execute([':v' => $value, ':id' => $id]);
-
-        if ($stmt->rowCount() === 0) {
-            return JsonResponse::error($response, 'Emission factor not found.', 404);
-        }
 
         return JsonResponse::success($response, ['id' => $id, 'kg_co2_per_unit' => $value], 200);
     }
