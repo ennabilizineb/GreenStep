@@ -6,10 +6,11 @@ const loading = ref(true)
 const error = ref('')
 
 onMounted(async () => {
-  await loadChanllenges()
+  await loadChallenges()
 })
 
-async function loadChanllenges() {
+async function loadChallenges() {
+  loading.value = true
   try {
     challenges.value = await getChallenges()
   } catch (err) {
@@ -20,9 +21,10 @@ async function loadChanllenges() {
 }
 
 async function handleJoin(id) {
+  error.value = ''
   try {
     await joinChallenge(id)
-    await loadChanllenges()
+    await loadChallenges()
   } catch (err) {
     error.value = err.message
   }
@@ -38,21 +40,21 @@ async function handleJoin(id) {
       </div>
     </header>
 
-    <p v-if="loading" Loading challenges...></p>
+    <p v-if="loading">Loading challenges...</p>
     <p v-if="error" style="color: red">{{ error }}</p>
 
     <section v-for="challenge in challenges" :key="challenge.id" class="card">
-      <h3>{{ challenge.title || challenge.name }}</h3>
+      <h3>{{ challenge.name }}</h3>
       <p>{{ challenge.description }}</p>
 
       <div class="progress-bar">
-        <div class="progress-fill" :style="{ width: challenge.progress_pct || 0 + '%' }"></div>
+        <div class="progress-fill" :style="{ width: (challenge.progress_pct || 0) + '%' }"></div>
       </div>
 
       <p class="success-text">{{ challenge.progress_pct || 0 }}% completed</p>
-      <p>{{ challenges.member_count || 0 }} participants</p>
-      <p>{{ challenges.days_left || 0 }} day left</p>
-      <P>{{ challenges.collective_saved_kg || 0 }}kg CO2 saved by group</P>
+      <p>{{ challenge.member_count || 0 }} participants</p>
+      <p>{{ challenge.days_left || 0 }} days left</p>
+      <p>{{ challenge.collective_saved_kg || 0 }}kg CO2 saved by group</p>
 
       <button
         class="btn"

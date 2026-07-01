@@ -120,6 +120,10 @@ export async function updateFactor(id, payload) {
   })
 }
 
+export async function getDailyTip() {
+  return request('/api/tips/daily')
+}
+
 export async function createTip(payload) {
   return request('/api/admin/tips', {
     method: 'POST',
@@ -134,27 +138,33 @@ export async function getAdminStats() {
 export async function getUsers() {
   return request('/api/admin/users')
 }
+
 export async function updateUserRole(id, role) {
   return request(`/api/admin/users/${id}/role`, {
     method: 'PUT',
     body: JSON.stringify({ role }),
   })
 }
+
 export async function updateUserStatus(id, is_active) {
   return request(`/api/admin/users/${id}/status`, {
     method: 'PUT',
     body: JSON.stringify({ is_active }),
   })
 }
+
 export async function deleteUser(id) {
   return request(`/api/admin/users/${id}`, { method: 'DELETE' })
 }
+
 export async function getPublicSettings() {
   return request('/api/settings/public')
 }
+
 export async function getAdminSettings() {
   return request('/api/admin/settings')
 }
+
 export async function updateAdminSettings(payload) {
   return request('/api/admin/settings', {
     method: 'PUT',

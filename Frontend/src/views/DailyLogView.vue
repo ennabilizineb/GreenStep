@@ -12,7 +12,15 @@ const mealAmount = ref(1)
 const electricityAmount = ref(5)
 const recyclingAmount = ref(3)
 
-const loggedOn = ref(new Date().toISOString().slice(0, 10))
+function todayLocalDate() {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const loggedOn = ref(todayLocalDate())
 
 const loading = ref(true)
 const saving = ref(false)
@@ -49,7 +57,7 @@ const selectedTransportActivity = computed(() => {
 })
 
 const selectedMealActivity = computed(() => {
-  return findActivityType(selectedMeal.value, 'meal')
+  return findActivityType(selectedMeal.value, 'food')
 })
 
 const electricityActivity = computed(() => {
@@ -70,8 +78,12 @@ onMounted(async () => {
   }
 })
 
-async function submitOneLog(activityType, amount) {
-  if (!activityType || !amount || Number(amount) <= 0) {
+async function submitOneLog(activityType, amount, label) {
+  if (!activityType) {
+    console.warn(`Skipped "${label}": no matching activity type found.`)
+    return
+  }
+  if (!amount || Number(amount) <= 0) {
     return
   }
 
@@ -88,10 +100,10 @@ async function submitLog() {
   saving.value = true
 
   try {
-    await submitOneLog(selectedTransportActivity.value, transportDistance.value)
-    await submitOneLog(selectedMealActivity.value, mealAmount.value)
-    await submitOneLog(electricityActivity.value, electricityAmount.value)
-    await submitOneLog(recyclingActivity.value, recyclingAmount.value)
+    await submitOneLog(selectedTransportActivity.value, transportDistance.value, 'transport')
+    await submitOneLog(selectedMealActivity.value, mealAmount.value, 'meal')
+    await submitOneLog(electricityActivity.value, electricityAmount.value, 'electricity')
+    await submitOneLog(recyclingActivity.value, recyclingAmount.value, 'recycling')
 
     successMessage.value = 'Activity log saved successfully.'
 
