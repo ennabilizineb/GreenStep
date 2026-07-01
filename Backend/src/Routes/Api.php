@@ -98,10 +98,12 @@ final class Api
         $app->delete('/api/admin/users/{id}', [$users, 'destroy'])->add(new JwtAuthMiddleware($jwt, 'admin'));
         // --- Public: site branding + maintenance status (needed on login page, no auth) ---
         $app->get('/api/settings/public', [$settings, 'publicSettings']);
-
+        $app->get('/api/admin/factors', [$admin, 'listFactors'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->put('/api/admin/factors/{id}', [$admin, 'updateFactor'])->add(new JwtAuthMiddleware($jwt, 'admin'));
         // --- Administrator: settings ---
         $app->get('/api/admin/settings', [$settings, 'index'])->add(new JwtAuthMiddleware($jwt, 'admin'));
         $app->put('/api/admin/settings', [$settings, 'update'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->post('/api/admin/tips', [$admin, 'createTip'])->add(new JwtAuthMiddleware($jwt, 'admin'));
         // --- CORS preflight: answer OPTIONS for any path ---
         $app->options('/{routes:.+}', fn ($req, $res) => $res);
     }

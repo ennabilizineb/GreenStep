@@ -115,7 +115,7 @@ export async function getFactors() {
 
 export async function updateFactor(id, payload) {
   return request(`/api/admin/factors/${id}`, {
-    method: 'POST',
+    method: 'PUT',
     body: JSON.stringify(payload),
   })
 }
