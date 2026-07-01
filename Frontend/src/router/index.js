@@ -42,9 +42,17 @@ router.beforeEach((to, from) => {
   const isLoggedIn = !!authStore.token
   const isAdmin = authStore.user?.role === 'admin'
 
-  const protectedPaths = ['/dashboard', '/admin', '/log', '/challenges', '/badges']
+  if (to.path === '/login' || to.path === '/register') {
+    // If they are already logged in, optionally kick them to the dashboard
+    if (isLoggedIn) {
+      return isAdmin ? '/admin' : '/dashboard'
+    }
+    return true
+  }
 
+  const protectedPaths = ['/dashboard', '/admin', '/log', '/challenges', '/badges']
   const isProtected = protectedPaths.some((prefix) => to.path.startsWith(prefix))
+
   if (isProtected && !isLoggedIn) {
     return '/login'
   }
