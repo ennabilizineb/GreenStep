@@ -1,9 +1,13 @@
 <?php
 // --((The index.php file serves as the entry point for the entire application.))
 declare(strict_types=1);
+
+ini_set('display_errors', '1');
+error_reporting(E_ALL);
+
 // This is the entry point for all HTTP requests. 
 //It is the only file that is publicly accessible.
-use App\Database\Database; // 
+use App\Database\Database;
 use App\Middleware\CorsMiddleware;
 use App\Routes\Api;
 use App\Support\JsonErrorHandler;

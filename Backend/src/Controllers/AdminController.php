@@ -101,15 +101,49 @@ final class AdminController
             return JsonResponse::error($response, 'Valid factor id and numeric kg_co2_per_unit are required.', 400);
         }
 
+        $exists = $this->db->prepare('SELECT 1 FROM `Activity_Type` WHERE activity_type_id = :id LIMIT 1');
+        $exists->execute([':id' => $id]);
+        if (!$exists->fetch()) {
+            return JsonResponse::error($response, 'Emission factor not found.', 404);
+        }
+
         $stmt = $this->db->prepare(
             'UPDATE `Activity_Type` SET kg_co2_per_unit = :v WHERE activity_type_id = :id'
         );
         $stmt->execute([':v' => $value, ':id' => $id]);
 
-        if ($stmt->rowCount() === 0) {
-            return JsonResponse::error($response, 'Emission factor not found.', 404);
-        }
-
         return JsonResponse::success($response, ['id' => $id, 'kg_co2_per_unit' => $value], 200);
+    }
+
+    /** GET /api/admin/stats -> platform-wide totals for the admin dashboard */
+    public function stats(Request $request, Response $response): Response
+    {
+        $totalUsers = (int) $this->db->query('SELECT COUNT(*) FROM `User`')->fetchColumn();
+        $totalLogs  = (int) $this->db->query('SELECT COUNT(*) FROM `Activity_Log`')->fetchColumn();
+        $totalChallenges = (int) $this->db->query('SELECT COUNT(*) FROM `Challenge`')->fetchColumn();
+        $activeChallenges = (int) $this->db->query(
+            'SELECT COUNT(*) FROM `Challenge` WHERE CURDATE() BETWEEN start_date AND end_date'
+        )->fetchColumn();
+        $totalBadges = (int) $this->db->query('SELECT COUNT(*) FROM `Badge`')->fetchColumn();
+        $badgesIssued = (int) $this->db->query('SELECT COUNT(*) FROM `User_Badge`')->fetchColumn();
+
+        $recentLogs = $this->db->query(
+            'SELECT at.name AS activity_name, al.amount, at.unit,
+                    ROUND(al.amount * at.kg_co2_per_unit, 2) AS co2_saved
+            FROM   `Activity_Log` al
+            JOIN   `Activity_Type` at ON at.activity_type_id = al.activity_type_id
+            ORDER  BY al.logged_on DESC
+            LIMIT  20'
+        )->fetchAll();
+
+        return JsonResponse::success($response, [
+            'total_users'        => $totalUsers,
+            'total_logs'         => $totalLogs,
+            'total_challenges'   => $totalChallenges,
+            'active_challenges'  => $activeChallenges,
+            'total_badges'       => $totalBadges,
+            'badges_issued'      => $badgesIssued,
+            'recent_logs'        => $recentLogs,
+        ], 200);
     }
 }

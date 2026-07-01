@@ -2,17 +2,18 @@
 import { onMounted, onActivated, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { watch } from 'vue'
-import { getDashboard } from '@/services/api'
+import { getDashboard, getDailyTip } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const dashboard = ref(null)
+const tip = ref(null)
 const error = ref('')
 const loading = ref(true)
 const route = useRoute()
 
-async function fetchDashboard() {  
+async function fetchDashboard() {
   loading.value = true
   error.value = ''
   try {
@@ -24,12 +25,23 @@ async function fetchDashboard() {
   }
 }
 
+async function fetchTip() {
+  try {
+    tip.value = await getDailyTip()
+  } catch (err) {
+    console.error('Failed to load daily tip:', err.message)
+  }
+}
+
 function logout() {
   authStore.logout()
   router.push('/login')
 }
 
-onMounted(fetchDashboard)
+onMounted(() => {
+  fetchDashboard()
+  fetchTip()
+})
 onActivated(fetchDashboard)
 
 watch(() => route.path, (path) => {
@@ -44,22 +56,25 @@ watch(() => route.path, (path) => {
         <h2 style="margin: 0">Hello, {{ authStore.user?.name }}! 👋</h2>
         <p class="subtitle">Let's make today greener.</p>
       </div>
-      <div style="display:flex; gap:10px; align-items:center">
-        <span>🔔</span>
-        <button
-          @click="logout"
-          style="background:none; border:none; color:#2f8f46; font-weight:700; cursor:pointer; font-size:13px">
-          Logout
-        </button>
-      </div>
+      <button
+        @click="logout"
+        style="background:#fde8e8; color:#c62828; border:none; padding:8px 14px; border-radius:12px; font-weight:700; cursor:pointer; font-size:13px;">
+        Logout
+      </button>
     </header>
 
     <p v-if="loading">Loading dashboard...</p>
     <p v-if="error" style="color: red">{{ error }}</p>
 
+    <section v-if="tip" class="card green-card">
+      <p style="margin: 0; font-weight: 700">🌿 Tip of the Day</p>
+      <h3 style="margin: 6px 0">{{ tip.title }}</h3>
+      <p style="margin: 0">{{ tip.body }}</p>
+    </section>
+
     <template v-if="dashboard">
       <section class="card green-card">
-        <p>Today’s Carbon Footprint</p>
+        <p>Today's Carbon Footprint</p>
         <div class="stat-value">{{ dashboard.today_kg_co2 }} kg CO2</div>
         <p class="success-text">Yesterday: {{ dashboard.yesterday_kg_co2 }} kg CO2</p>
       </section>

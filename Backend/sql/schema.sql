@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS User (
     name          VARCHAR(120) NOT NULL,
     email         VARCHAR(190) NOT NULL UNIQUE,
     password_hash VARCHAR(225) NOT NULL,
+    is_active     TINYINT(1)   NOT NULL DEFAULT 1,
     joined_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES Role(role_id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
@@ -101,3 +102,16 @@ CREATE TABLE IF NOT EXISTS Challenge_Member (
     CONSTRAINT fk_cm_challenge FOREIGN KEY (challenge_id) REFERENCES Challenge(challenge_id) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_cm_user      FOREIGN KEY (user_id)      REFERENCES User(user_id)           ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS Setting (
+    setting_key   VARCHAR(60) PRIMARY KEY,
+    setting_value TEXT NULL
+) ENGINE=InnoDB;
+
+INSERT INTO Setting (setting_key, setting_value) VALUES
+('site_name', 'GreenStep'),
+('maintenance_mode', '0'),
+('password_min_length', '8'),
+('password_require_upper', '1'),
+('password_require_number', '1')
+ON DUPLICATE KEY UPDATE setting_key = setting_key;

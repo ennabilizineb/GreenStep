@@ -199,6 +199,9 @@ select {
 }
 
 .sidebar-item {
+  display: block;
+  text-decoration: none;
+  cursor: pointer;
   padding: 14px 12px;
   margin: 8px 0;
   border-radius: 14px;
@@ -206,9 +209,39 @@ select {
   font-weight: 700;
 }
 
+.sidebar-item:hover {
+  background: #f2f8f1;
+}
+
 .sidebar-item.active {
   background: #e8f7ea;
   color: #1f7a36;
+}
+
+.sidebar-divider {
+  border: 0;
+  border-top: 1px solid #e5eee3;
+  margin: 20px 0;
+}
+
+.sidebar-logout {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: #c62828;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  padding: 14px 12px;
+  margin: 8px 0;
+  border-radius: 14px;
+  cursor: pointer;
+  display: block;
+}
+
+.sidebar-logout:hover {
+  background: #fdf2f2;
 }
 
 .admin-main {

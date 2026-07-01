@@ -13,6 +13,8 @@ use App\Controllers\ChallengeController;    // handles community challenges: lis
 use App\Controllers\LogController;          // handles activity logs AND the dashboard calculation
 use App\Controllers\TipController;          // handles the daily random eco tip
 use App\Middleware\JwtAuthMiddleware;        // the security guard - checks if the user has a valid JWT token before allowing access
+use App\Controllers\UserController;
+use App\Controllers\SettingsController;
 use PDO;                                    // the database connection object passed into the controllers
 use Slim\App;                               // the Slim framework app that we register all routes onto
 
@@ -52,7 +54,8 @@ final class Api
         $admin         = new AdminController($db);              // handles admin actions
         $activityTypes = new ActivityTypeController($db);       // handles the activity type list
         $badges        = new BadgeController($db);              // handles badges
-
+        $users         = new UserController($db);
+        $settings = new SettingsController($db);
 
 
         // --((Public routes: no login needed. Anyone can call these.))
@@ -112,23 +115,27 @@ final class Api
         $app->post('/api/challenges', [$challenge, 'store'])->add(new JwtAuthMiddleware($jwt, 'leader'));
         $app->put('/api/challenges/{id}', [$challenge, 'update'])->add(new JwtAuthMiddleware($jwt, 'leader'));
         $app->delete('/api/challenges/{id}', [$challenge, 'destroy'])->add(new JwtAuthMiddleware($jwt, 'leader'));
-        //-------------------------
-        // --((Admin-only routes: only accounts with role = 'admin' can reach these.))
-        // 14. I register the admin routes for managing the tip library and CO2 emission factors.
-        // The 'admin' argument means only admin-role JWT tokens are accepted here.
-        $app->post('/api/admin/tips', [$admin, 'createTip'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+
+        // Admin-specific challenge management (same controller, same logic, admin-gated)
+        $app->post('/api/admin/challenges', [$challenge, 'store'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->put('/api/admin/challenges/{id}', [$challenge, 'update'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->delete('/api/admin/challenges/{id}', [$challenge, 'destroy'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->post('/api/admin/badges', [$badges, 'store'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->delete('/api/admin/badges/{id}', [$badges, 'destroy'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->get('/api/admin/stats', [$admin, 'stats'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->get('/api/admin/users', [$users, 'index'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->put('/api/admin/users/{id}/role', [$users, 'updateRole'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->put('/api/admin/users/{id}/status', [$users, 'updateStatus'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->delete('/api/admin/users/{id}', [$users, 'destroy'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        // --- Public: site branding + maintenance status (needed on login page, no auth) ---
+        $app->get('/api/settings/public', [$settings, 'publicSettings']);
         $app->get('/api/admin/factors', [$admin, 'listFactors'])->add(new JwtAuthMiddleware($jwt, 'admin'));
         $app->put('/api/admin/factors/{id}', [$admin, 'updateFactor'])->add(new JwtAuthMiddleware($jwt, 'admin'));
-
-
-
-
-
-        // catch-all OPTIONS Route for CORS preflight requests
-        // to prevent from CORS errors during Cross-origin communication.
-        // 15. I register this route to handle CORS preflight requests from the browser.
-        // This is needed because the frontend is on a different port than the backend,
-        //  so the browser enforces CORS.
+        // --- Administrator: settings ---
+        $app->get('/api/admin/settings', [$settings, 'index'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->put('/api/admin/settings', [$settings, 'update'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->post('/api/admin/tips', [$admin, 'createTip'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        // --- CORS preflight: answer OPTIONS for any path ---
         $app->options('/{routes:.+}', fn ($req, $res) => $res);
     }
 }
