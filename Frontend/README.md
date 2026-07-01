@@ -23,7 +23,7 @@ The frontend application utilizes the following technologies:
 * ESLint
 * Prettier
 
-* Current integrations:
+Current integrations:
 
 - Fetch API for backend communication
 - JWT authentication with Local Storage
