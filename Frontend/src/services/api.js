@@ -126,3 +126,7 @@ export async function createTip(payload) {
     body: JSON.stringify(payload),
   })
 }
+
+export async function getAdminStats() {
+  return request('/api/admin/stats')
+}

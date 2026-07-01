@@ -87,6 +87,7 @@ final class Api
         $app->delete('/api/admin/challenges/{id}', [$challenge, 'destroy'])->add(new JwtAuthMiddleware($jwt, 'admin'));
         $app->post('/api/admin/badges', [$badges, 'store'])->add(new JwtAuthMiddleware($jwt, 'admin'));
         $app->delete('/api/admin/badges/{id}', [$badges, 'destroy'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->get('/api/admin/stats', [$admin, 'stats'])->add(new JwtAuthMiddleware($jwt, 'admin'));
         
         // --- CORS preflight: answer OPTIONS for any path ---
         $app->options('/{routes:.+}', fn ($req, $res) => $res);

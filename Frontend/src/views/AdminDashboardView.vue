@@ -20,26 +20,22 @@
           <div class="admin-grid">
             <div class="admin-card">
               <p class="subtitle" style="margin:0;">Total Users</p>
-              <h2>4</h2>
-              <p class="success-text">↑ 100% Core</p>
+              <h2>{{ stats?.total_users ?? 0 }}</h2>
             </div>
 
             <div class="admin-card">
               <p class="subtitle" style="margin:0;">Total Logs</p>
-              <h2>{{ dashboardData?.history?.length || 0 }}</h2>
-              <p class="success-text">Active entries</p>
+              <h2>{{ stats?.total_logs ?? 0 }}</h2>
             </div>
 
             <div class="admin-card">
               <p class="subtitle" style="margin:0;">Active Challenges</p>
-              <h2>3</h2>
-              <p class="success-text">Fully Synced</p>
+              <h2>{{ stats?.active_challenges ?? 0 }}</h2>
             </div>
 
             <div class="admin-card">
               <p class="subtitle" style="margin:0;">System Badges</p>
-              <h2>5</h2>
-              <p class="success-text">Available</p>
+              <h2>{{ stats?.total_badges ?? 0 }}</h2>
             </div>
           </div>
 
@@ -98,32 +94,33 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { getDashboard } from '@/services/api'
+import { getAdminStats } from '@/services/api'
 import AdminSidebar from '@/components/AdminSidebar.vue'
 
-const dashboardData = ref(null)
+const stats = ref(null)
 const loading = ref(true)
 const searchQuery = ref('')
-const chartHeights = ref([50, 85, 60, 110, 140, 95, 120])
 
 onMounted(async () => {
   try {
-    const data = await getDashboard()
-    dashboardData.value = data
-    if (data?.history && data.history.length > 0) {
-      // Maps live quantities dynamically to bar heights within range limitations
-      chartHeights.value = data.history.map(item => Math.min(40 + (parseFloat(item.amount) * 6), 170))
-    }
+    stats.value = await getAdminStats()
   } catch (err) {
-    console.error('Analytics load failure:', err)
+    console.error('Failed to load admin stats:', err)
   } finally {
     loading.value = false
   }
 })
 
+const chartHeights = computed(() => {
+  if (!stats.value?.recent_logs?.length) return [40, 40, 40, 40, 40, 40, 40]
+  return stats.value.recent_logs
+    .slice(0, 7)
+    .map((log) => Math.min(40 + log.co2_saved * 6, 170))
+})
+
 const filteredLogs = computed(() => {
-  if (!dashboardData.value?.history) return []
-  return dashboardData.value.history.filter(log =>
+  if (!stats.value?.recent_logs) return []
+  return stats.value.recent_logs.filter((log) =>
     (log.activity_name || '').toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 })
