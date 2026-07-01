@@ -93,8 +93,6 @@ http://localhost:5173
 Before testing API-related features, ensure the backend server is running.
 
 ---
-
----
 # Login Credentials Seed (To test the functionality!)
 
 ## 1. In your Laragon Terminal:
