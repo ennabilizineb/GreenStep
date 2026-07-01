@@ -23,11 +23,15 @@ The frontend application utilizes the following technologies:
 * ESLint
 * Prettier
 
+* Current integrations:
+
+- Fetch API for backend communication
+- JWT authentication with Local Storage
+
 Planned integrations:
 
-* Chart.js for dashboard analytics
-* Axios / Fetch API for backend communication
-* Capacitor for Android mobile application wrapping
+- Chart.js for dashboard analytics
+- Capacitor for Android mobile application wrapping
 
 ---
 
@@ -40,8 +44,16 @@ Frontend/
 │   ├── assets/
 │   ├── components/
 │   ├── router/
+│   ├──services/
 │   ├── stores/
 │   ├── views/
+│   │   ├── AdminDashboardView.vue      # Administrative dashboard
+│   │   ├── BadgeView.vue               # Displays user achievements and badges
+│   │   ├── ChallengeView.vue           # Browse and join sustainability challenges
+│   │   ├── DailyLogView.vue            # Records daily activities for carbon footprint calculation
+│   │   ├── DashboardView.vue           # Displays user carbon statistics and summaries
+│   │   ├── LoginView.vue               # User authentication page
+│   │   └── RegisterView.vue            # New user registration page
 │   ├── App.vue
 │   └── main.js
 ├── package.json
@@ -50,6 +62,7 @@ Frontend/
 ```
 
 ---
+
 # Project Setup
 
 ## 1. Install Dependencies
@@ -70,6 +83,15 @@ npm run format
 ```bash
 npm run dev
 ```
+
+The frontend development server will run at:
+
+```text
+http://localhost:5173
+```
+
+Before testing API-related features, ensure the backend server is running.
+
 ---
 
 ---
@@ -80,4 +102,10 @@ npm run dev
 ```bash
 php -r "echo password_hash('password', PASSWORD_DEFAULT);"
 ```
-## 2. Go to HeidiSQL, run all the schemas in ./Backend/sql/
+## 2.  Go to HeidiSQL and run all SQL schemas located in:
+
+```text
+./Backend/sql/
+```
+
+Then insert a test user into the database using the generated password hash.
