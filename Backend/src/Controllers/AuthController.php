@@ -94,18 +94,22 @@ final class AuthController
                     u.name,
                     u.email,
                     u.password_hash,
+                    u.is_active,
                     r.name       AS role
-             FROM   `User` u
-             JOIN   `Role` r ON r.role_id = u.role_id
-             WHERE  u.email = :email
-             LIMIT  1'
+            FROM   `User` u
+            JOIN   `Role` r ON r.role_id = u.role_id
+            WHERE  u.email = :email
+            LIMIT  1'
         );
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
 
-        // Same message for wrong email or password — prevents user enumeration
         if (!$user || !password_verify($password, $user['password_hash'])) {
             return JsonResponse::error($response, 'Invalid credentials.', 401);
+        }
+
+        if ((int) $user['is_active'] === 0) {
+            return JsonResponse::error($response, 'This account has been deactivated.', 403);
         }
 
         $token = $this->issueToken((int) $user['id'], $user['role']);

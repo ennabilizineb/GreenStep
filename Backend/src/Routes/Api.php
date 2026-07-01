@@ -11,6 +11,7 @@ use App\Controllers\BadgeController;
 use App\Controllers\ChallengeController;
 use App\Controllers\LogController;
 use App\Controllers\TipController;
+use App\Controllers\UserController;
 use App\Middleware\JwtAuthMiddleware;
 use PDO;
 use Slim\App;
@@ -46,6 +47,7 @@ final class Api
         $admin         = new AdminController($db);
         $activityTypes = new ActivityTypeController($db);
         $badges        = new BadgeController($db);
+        $users         = new UserController($db);
 
         // --- Health check (handy for deployment verification) ---
         $app->get('/api/health', function ($req, $res) {
@@ -88,7 +90,11 @@ final class Api
         $app->post('/api/admin/badges', [$badges, 'store'])->add(new JwtAuthMiddleware($jwt, 'admin'));
         $app->delete('/api/admin/badges/{id}', [$badges, 'destroy'])->add(new JwtAuthMiddleware($jwt, 'admin'));
         $app->get('/api/admin/stats', [$admin, 'stats'])->add(new JwtAuthMiddleware($jwt, 'admin'));
-        
+        $app->get('/api/admin/users', [$users, 'index'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->put('/api/admin/users/{id}/role', [$users, 'updateRole'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->put('/api/admin/users/{id}/status', [$users, 'updateStatus'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->delete('/api/admin/users/{id}', [$users, 'destroy'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+
         // --- CORS preflight: answer OPTIONS for any path ---
         $app->options('/{routes:.+}', fn ($req, $res) => $res);
     }

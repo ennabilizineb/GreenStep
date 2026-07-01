@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS User (
     name          VARCHAR(120) NOT NULL,
     email         VARCHAR(190) NOT NULL UNIQUE,
     password_hash VARCHAR(225) NOT NULL,
+    is_active     TINYINT(1)   NOT NULL DEFAULT 1,
     joined_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES Role(role_id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;

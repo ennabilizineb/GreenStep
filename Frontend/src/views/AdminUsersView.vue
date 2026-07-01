@@ -5,38 +5,69 @@
       <section class="admin-main">
         <div class="admin-top">
           <div>
-            <h1 style="margin: 0; color: #1f7a36;">User Matrix Registry</h1>
-            <p class="subtitle">Review operational clearance flags and active user identities.</p>
+            <h1 style="margin: 0">Users</h1>
+            <p class="subtitle">Manage roles and account status.</p>
           </div>
         </div>
 
-        <section class="admin-panel" style="margin-top: 22px;">
-          <h2 style="margin-top: 0; color: #1f7a36;">Provisioned Accounts Matrix</h2>
-          <table class="admin-table">
+        <p v-if="feedbackMsg" :style="{ padding: '12px', borderRadius: '10px', marginTop: '16px', fontWeight: 'bold', backgroundColor: isError ? '#fde8e8' : '#eafaf1', color: isError ? '#c62828' : '#2f8f46' }">
+          {{ feedbackMsg }}
+        </p>
+
+        <section class="admin-panel" style="margin-top: 18px">
+          <p v-if="loading">Loading users...</p>
+
+          <table v-else class="admin-table">
             <thead>
               <tr>
-                <th>Identity ID</th>
-                <th>Full Name</th>
-                <th>Authorized Communication Node</th>
-                <th>Access Level Assignment</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th style="text-align: right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="user in systemUsers" :key="user.id">
-                <td><code style="background: #eef5ee; padding: 4px 8px; border-radius: 6px;">#0{{ user.id }}</code></td>
-                <td><strong>{{ user.name }}</strong></td>
-                <td>{{ user.email }}</td>
+              <tr v-for="u in users" :key="u.id">
+                <td><strong>{{ u.name }}</strong></td>
+                <td>{{ u.email }}</td>
                 <td>
-                  <span :style="{
-                    padding: '4px 10px',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    backgroundColor: user.role === 'admin' ? '#fde8e8' : (user.role === 'leader' ? '#fff4e5' : '#e8f7ea'),
-                    color: user.role === 'admin' ? '#c62828' : (user.role === 'leader' ? '#b76e00' : '#2f8f46')
-                  }">
-                    {{ user.role.toUpperCase() }}
+                  <select
+                    :value="u.role"
+                    :disabled="u.id === myId || busyId === u.id"
+                    @change="handleRoleChange(u, $event.target.value)"
+                    class="input"
+                    style="margin: 0; padding: 6px 8px; width: 120px"
+                  >
+                    <option value="user">user</option>
+                    <option value="leader">leader</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </td>
+                <td>
+                  <span :style="{ color: u.is_active ? '#2f8f46' : '#c62828', fontWeight: 'bold' }">
+                    {{ u.is_active ? 'Active' : 'Deactivated' }}
                   </span>
+                </td>
+                <td style="text-align: right; white-space: nowrap">
+                  <button
+                    v-if="u.id !== myId"
+                    @click="handleToggleStatus(u)"
+                    :disabled="busyId === u.id"
+                    class="btn secondary-btn"
+                    style="width: auto; padding: 6px 12px; margin-right: 6px"
+                  >
+                    {{ u.is_active ? 'Deactivate' : 'Activate' }}
+                  </button>
+                  <button
+                    v-if="u.id !== myId"
+                    @click="handleDelete(u)"
+                    :disabled="busyId === u.id"
+                    style="background: transparent; border: none; color: #c62828; font-weight: bold; cursor: pointer; font-size: 13px"
+                  >
+                    Delete
+                  </button>
+                  <span v-if="u.id === myId" style="color: #6d7a6b; font-size: 12px">You</span>
                 </td>
               </tr>
             </tbody>
@@ -48,14 +79,79 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { getUsers, updateUserRole, updateUserStatus, deleteUser } from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
 import AdminSidebar from '@/components/AdminSidebar.vue'
 
-// Mirrors seed data parameters cleanly
-const systemUsers = ref([
-  { id: 1, name: 'System Administrator', email: 'admin@greenstep.com', role: 'admin' },
-  { id: 2, name: 'System Administrator 2', email: 'admin2@greenstep.com', role: 'admin' },
-  { id: 3, name: 'System Leader', email: 'leader@greenstep.com', role: 'leader' },
-  { id: 4, name: 'System Member', email: 'member@greenstep.com', role: 'user' }
-])
+const authStore = useAuthStore()
+const myId = authStore.user?.id
+
+const users = ref([])
+const loading = ref(true)
+const busyId = ref(null)
+const feedbackMsg = ref('')
+const isError = ref(false)
+
+async function fetchUsers() {
+  loading.value = true
+  try {
+    users.value = await getUsers()
+  } catch (err) {
+    console.error('Failed to load users:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+async function handleRoleChange(user, newRole) {
+  busyId.value = user.id
+  feedbackMsg.value = ''
+  isError.value = false
+  try {
+    await updateUserRole(user.id, newRole)
+    feedbackMsg.value = `${user.name}'s role updated to ${newRole}.`
+    await fetchUsers()
+  } catch (err) {
+    isError.value = true
+    feedbackMsg.value = err.message
+  } finally {
+    busyId.value = null
+  }
+}
+
+async function handleToggleStatus(user) {
+  busyId.value = user.id
+  feedbackMsg.value = ''
+  isError.value = false
+  try {
+    await updateUserStatus(user.id, !user.is_active)
+    feedbackMsg.value = `${user.name} ${user.is_active ? 'deactivated' : 'activated'}.`
+    await fetchUsers()
+  } catch (err) {
+    isError.value = true
+    feedbackMsg.value = err.message
+  } finally {
+    busyId.value = null
+  }
+}
+
+async function handleDelete(user) {
+  if (!confirm(`Delete ${user.name}? This cannot be undone.`)) return
+  busyId.value = user.id
+  feedbackMsg.value = ''
+  isError.value = false
+  try {
+    await deleteUser(user.id)
+    feedbackMsg.value = `${user.name} deleted.`
+    await fetchUsers()
+  } catch (err) {
+    isError.value = true
+    feedbackMsg.value = err.message
+  } finally {
+    busyId.value = null
+  }
+}
+
+onMounted(fetchUsers)
 </script>

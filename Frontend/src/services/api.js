@@ -130,3 +130,22 @@ export async function createTip(payload) {
 export async function getAdminStats() {
   return request('/api/admin/stats')
 }
+
+export async function getUsers() {
+  return request('/api/admin/users')
+}
+export async function updateUserRole(id, role) {
+  return request(`/api/admin/users/${id}/role`, {
+    method: 'PUT',
+    body: JSON.stringify({ role }),
+  })
+}
+export async function updateUserStatus(id, is_active) {
+  return request(`/api/admin/users/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ is_active }),
+  })
+}
+export async function deleteUser(id) {
+  return request(`/api/admin/users/${id}`, { method: 'DELETE' })
+}
