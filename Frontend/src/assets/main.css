@@ -199,11 +199,18 @@ select {
 }
 
 .sidebar-item {
+  display: block;
+  text-decoration: none;
+  cursor: pointer;
   padding: 14px 12px;
   margin: 8px 0;
   border-radius: 14px;
   color: #4d5c4a;
   font-weight: 700;
+}
+
+.sidebar-item:hover {
+  background: #f2f8f1;
 }
 
 .sidebar-item.active {

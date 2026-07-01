@@ -1,18 +1,7 @@
 <template>
   <main class="admin-page">
     <div class="admin-layout">
-      <aside class="sidebar">
-        <h2>🌱 GreenStep</h2>
-        <p class="subtitle">Admin Panel</p>
-
-        <div class="sidebar-item active">Dashboard</div>
-        <div class="sidebar-item">Users</div>
-        <div class="sidebar-item">Eco Tips</div>
-        <div class="sidebar-item">Challenges</div>
-        <div class="sidebar-item">Badges</div>
-        <div class="sidebar-item">Emission Factors</div>
-        <div class="sidebar-item">Settings</div>
-      </aside>
+      <AdminSidebar />
 
       <section class="admin-main">
         <div class="admin-top">
@@ -111,5 +100,7 @@
 </template>
 
 <script setup>
+import AdminSidebar from '@/components/AdminSidebar.vue'
+
 const chartBars = [80, 110, 90, 145, 180, 130, 165]
 </script>

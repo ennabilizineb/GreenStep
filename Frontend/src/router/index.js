@@ -6,7 +6,14 @@ import ChallengeView from '../views/ChallengeView.vue'
 import AdminDashboardView from '../views/AdminDashboardView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import BadgesView from '../views/BadgesView.vue'
+import AdminUsersView from '../views/AdminUsersView.vue'
+import AdminTipsView from '../views/AdminTipsView.vue'
+import AdminChallengesView from '../views/AdminChallengesView.vue'
+import AdminBadgesView from '../views/AdminBadgesView.vue'
+import AdminFactorsView from '../views/AdminFactorsView.vue'
+import AdminSettingsView from '../views/AdminSettingsView.vue'
 import { useAuthStore } from '@/stores/auth'
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -19,6 +26,14 @@ const router = createRouter({
     { path: '/admin', component: AdminDashboardView },
     { path: '/register', component: RegisterView },
     { path: '/badges', component: BadgesView },
+
+      // Admin Role routes
+    { path: '/admin/users', component: AdminUsersView },
+    { path: '/admin/tips', component: AdminTipsView },
+    { path: '/admin/challenges', component: AdminChallengesView },
+    { path: '/admin/badges', component: AdminBadgesView },
+    { path: '/admin/factors', component: AdminFactorsView },
+    { path: '/admin/settings', component: AdminSettingsView },
   ],
 })
 
@@ -30,12 +45,12 @@ router.beforeEach((to, from, next) => {
   const protectedPaths = ['/dashboard', '/admin', '/log', '/challenges', '/badges']
 
   // Block logged-out users from any protected page
-  if (protectedPaths.includes(to.path) && !isLoggedIn) {
+  const isProtected = protectedPrefixes.some((prefix) => to.path.startsWith(prefix))
+  if (isProtected && !isLoggedIn) {
     return next('/login')
   }
 
-  // Block non-admins from the admin dashboard
-  if (to.path === '/admin' && !isAdmin) {
+  if (to.path.startsWith('/admin') && !isAdmin) {
     return next('/dashboard')
   }
 
