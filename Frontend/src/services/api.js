@@ -30,12 +30,14 @@ async function request(endpoint, options = {}) {
   }
   return result.data
 }
+
 export async function login(email, password) {
   return request('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   })
 }
+
 export async function register(name, email, password) {
   return request('/api/auth/register', {
     method: 'POST',
@@ -44,37 +46,74 @@ export async function register(name, email, password) {
 }
 
 export async function getDashboard() {
-  return request('/api/dashboard')
+  return request('/api/dashboard', { method: 'GET' })
 }
+
 export async function getActivityTypes() {
-  return request('/api/activity-types')
+  return request('/api/activity-types', { method: 'GET' })
 }
+
 export async function getLogs() {
-  return request('/api/logs')
+  return request('/api/logs', { method: 'GET' })
 }
+
 export async function createLog(payload) {
   return request('/api/logs', {
     method: 'POST',
     body: JSON.stringify(payload),
   })
 }
+
 export async function getChallenges() {
-  return request('/api/challenges')
+  return request('/api/challenges', { method: 'GET' })
 }
+
 export async function joinChallenge(id) {
   return request(`/api/challenges/${id}/join`, {
     method: 'POST',
   })
 }
+
+export async function createChallenge(payload) {
+  return request('/api/admin/challenges', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function deleteChallenge(id) {
+  return request(`/api/admin/challenges/${id}`, { method: 'DELETE' })
+}
+
 export async function getBadges() {
-  return request('/api/badges')
+  return request('/api/badges', { method: 'GET' })
 }
+
+export async function createBadge(payload) {
+  return request('/api/admin/badges', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function deleteBadge(id) {
+  return request(`/api/admin/badges/${id}`, { method: 'DELETE' })
+}
+
 export async function getFactors() {
-  return request('/api/admin/factors')
+  return request('/api/admin/factors', { method: 'GET' })
 }
+
 export async function updateFactor(id, kg_co2_per_unit) {
   return request(`/api/admin/factors/${id}`, {
     method: 'PUT',
     body: JSON.stringify({ kg_co2_per_unit }),
+  })
+}
+
+export async function createTip(payload) {
+  return request('/api/admin/tips', {
+    method: 'POST',
+    body: JSON.stringify(payload),
   })
 }

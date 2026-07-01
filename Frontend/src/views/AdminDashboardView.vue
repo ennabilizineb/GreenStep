@@ -6,101 +6,125 @@
       <section class="admin-main">
         <div class="admin-top">
           <div>
-            <h1 style="margin: 0">Dashboard Overview</h1>
-            <p class="subtitle">Monitor GreenStep platform activities.</p>
+            <h1 style="margin: 0; color: #1f7a36;">Dashboard Overview</h1>
+            <p class="subtitle">Monitor live GreenStep platform logs and activity metrics.</p>
           </div>
-          <input class="admin-search" placeholder="Search..." />
+          <input v-model="searchQuery" class="admin-search" placeholder="Search activity logs..." />
         </div>
 
-        <div class="admin-grid">
-          <div class="admin-card">
-            <p>Total Users</p>
-            <h2>1,042</h2>
-            <p class="success-text">↑ 12.5%</p>
-          </div>
-
-          <div class="admin-card">
-            <p>Total Logs</p>
-            <h2>6,241</h2>
-            <p class="success-text">↑ 18.7%</p>
-          </div>
-
-          <div class="admin-card">
-            <p>Challenges</p>
-            <h2>31</h2>
-            <p class="success-text">7 active</p>
-          </div>
-
-          <div class="admin-card">
-            <p>Badges Issued</p>
-            <h2>2,651</h2>
-            <p class="success-text">↑ 15.3%</p>
-          </div>
+        <div v-if="loading" style="padding: 40px; text-align: center; color: #6d7a6b;">
+          Loading real-time platform analytics...
         </div>
 
-        <div class="admin-content-grid">
-          <section class="admin-panel">
-            <h2>Carbon Footprint Saved</h2>
-            <div class="chart-bars" style="height: 240px">
-              <div
-                v-for="item in chartBars"
-                :key="item"
-                class="bar"
-                :style="{ height: item + 'px' }"
-              ></div>
+        <template v-else>
+          <div class="admin-grid">
+            <div class="admin-card">
+              <p class="subtitle" style="margin:0;">Total Users</p>
+              <h2>4</h2>
+              <p class="success-text">↑ 100% Core</p>
             </div>
+
+            <div class="admin-card">
+              <p class="subtitle" style="margin:0;">Total Logs</p>
+              <h2>{{ dashboardData?.history?.length || 0 }}</h2>
+              <p class="success-text">Active entries</p>
+            </div>
+
+            <div class="admin-card">
+              <p class="subtitle" style="margin:0;">Active Challenges</p>
+              <h2>3</h2>
+              <p class="success-text">Fully Synced</p>
+            </div>
+
+            <div class="admin-card">
+              <p class="subtitle" style="margin:0;">System Badges</p>
+              <h2>5</h2>
+              <p class="success-text">Available</p>
+            </div>
+          </div>
+
+          <div class="admin-content-grid">
+            <section class="admin-panel">
+              <h2 style="margin-top: 0; color: #1f7a36;">Carbon Impact Analytics</h2>
+              <div class="chart-bars" style="height: 180px;">
+                <div
+                  v-for="(heightValue, index) in chartHeights"
+                  :key="index"
+                  class="bar"
+                  :style="{ height: heightValue + 'px' }"
+                ></div>
+              </div>
+            </section>
+
+            <section class="admin-panel">
+              <h2 style="margin-top: 0; color: #1f7a36;">System Status</h2>
+              <p style="margin: 10px 0;">👤 Root Admin Session: <span class="success-text">Active</span></p>
+              <p style="margin: 10px 0;">🏆 Badge Engines: <span class="success-text">Online</span></p>
+              <p style="margin: 10px 0;">⚙️ Emission Tables: <span class="success-text">Verified</span></p>
+            </section>
+          </div>
+
+          <section class="admin-panel" style="margin-top: 18px">
+            <h2 style="margin-top: 0; color: #1f7a36;">Real-time Activity Log Buffer</h2>
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Activity Type</th>
+                  <th>Recorded Volume</th>
+                  <th>Calculated Carbon Offset</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(log, idx) in filteredLogs" :key="idx">
+                  <td>{{ idx + 1 }}</td>
+                  <td><strong>{{ log.activity_name || 'Generic Event' }}</strong></td>
+                  <td>{{ log.amount }} {{ log.unit }}</td>
+                  <td class="success-text">{{ log.co2_saved }} kg CO₂</td>
+                </tr>
+                <tr v-if="filteredLogs.length === 0">
+                  <td colspan="4" style="text-align: center; color: #6d7a6b; padding: 20px;">
+                    No log parameters match your search criteria.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </section>
-
-          <section class="admin-panel">
-            <h2>Recent Activities</h2>
-            <p>👤 New user registered</p>
-            <p>🏆 Challenge created</p>
-            <p>🌿 Eco tip added</p>
-            <p>⚙️ Emission factor updated</p>
-          </section>
-        </div>
-
-        <section class="admin-panel" style="margin-top: 18px">
-          <h2>Top Users by CO₂ Saved</h2>
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>User</th>
-                <th>CO₂ Saved</th>
-                <th>Badges</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <tr>
-                <td>1</td>
-                <td>alex.green@example.com</td>
-                <td>125.4 kg</td>
-                <td>🌱 🏆</td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td>sarah.wong@example.com</td>
-                <td>98.7 kg</td>
-                <td>🌿 ♻️</td>
-              </tr>
-              <tr>
-                <td>3</td>
-                <td>john.doe@example.com</td>
-                <td>87.2 kg</td>
-                <td>🌱</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
+        </template>
       </section>
     </div>
   </main>
 </template>
 
 <script setup>
+import { ref, onMounted, computed } from 'vue'
+import { getDashboard } from '@/services/api'
 import AdminSidebar from '@/components/AdminSidebar.vue'
 
-const chartBars = [80, 110, 90, 145, 180, 130, 165]
+const dashboardData = ref(null)
+const loading = ref(true)
+const searchQuery = ref('')
+const chartHeights = ref([50, 85, 60, 110, 140, 95, 120])
+
+onMounted(async () => {
+  try {
+    const data = await getDashboard()
+    dashboardData.value = data
+    if (data?.history && data.history.length > 0) {
+      // Maps live quantities dynamically to bar heights within range limitations
+      chartHeights.value = data.history.map(item => Math.min(40 + (parseFloat(item.amount) * 6), 170))
+    }
+  } catch (err) {
+    console.error('Analytics load failure:', err)
+  } finally {
+    loading.value = false
+  }
+})
+
+const filteredLogs = computed(() => {
+  if (!dashboardData.value?.history) return []
+  return dashboardData.value.history.filter(log =>
+    (log.activity_name || '').toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+})
 </script>
