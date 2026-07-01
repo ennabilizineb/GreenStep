@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+ini_set('display_errors', '1');
+error_reporting(E_ALL);
+
 use App\Database\Database;
 use App\Middleware\CorsMiddleware;
 use App\Routes\Api;

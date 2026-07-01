@@ -2,12 +2,12 @@
   <main class="admin-page">
     <div class="admin-layout">
       <AdminSidebar />
-      
+
       <section class="admin-main">
         <div class="admin-top">
           <div>
-            <h1 style="margin: 0; color: #1f7a36;">Eco Challenges Console</h1>
-            <p class="subtitle">Deploy community tasks and incentivize sustainability goals.</p>
+            <h1 style="margin: 0">Challenges</h1>
+            <p class="subtitle">Create and manage community sustainability challenges.</p>
           </div>
         </div>
 
@@ -15,90 +15,80 @@
           {{ feedbackMsg }}
         </p>
 
-        <div class="admin-content-grid" style="margin-top: 18px;">
-          
+        <div class="admin-content-grid" style="margin-top: 18px">
           <section class="admin-panel">
-            <h2 style="margin-top: 0; color: #1f7a36;">Launch New Challenge</h2>
+            <h2 style="margin-top: 0">Create New Challenge</h2>
             <form @submit.prevent="handleCreateChallenge">
-              <div style="margin-bottom: 12px;">
-                <label class="label">Challenge Title</label>
-                <input v-model="form.title" type="text" placeholder="e.g., Carpool Champion" required class="input" style="margin-bottom: 0;" />
-              </div>
+              <label class="label">Name</label>
+              <input v-model="form.name" type="text" placeholder="e.g., Eco-Commuter Sprint" required class="input" />
 
-              <div style="margin-bottom: 12px;">
-                <label class="label">Objective Requirements Description</label>
-                <textarea v-model="form.description" rows="3" placeholder="Describe the sustainability target clearly..." required class="input" style="margin-bottom: 0; font-family: inherit; resize: vertical; min-height: 70px;"></textarea>
-              </div>
+              <label class="label">Description</label>
+              <textarea v-model="form.description" rows="3" required class="input" style="font-family: inherit; resize: vertical; min-height: 70px"></textarea>
 
-              <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-                <div style="flex: 1;">
-                  <label class="label">Target Points</label>
-                  <input v-model.number="form.points" type="number" min="1" required class="input" style="margin-bottom: 0;" />
+              <div style="display: flex; gap: 12px">
+                <div style="flex: 1">
+                  <label class="label">Start Date</label>
+                  <input v-model="form.start_date" type="date" required class="input" />
                 </div>
-                <div style="flex: 1;">
-                  <label class="label">Day Duration</label>
-                  <input v-model.number="form.days" type="number" min="1" placeholder="e.g., 7" required class="input" style="margin-bottom: 0;" />
+                <div style="flex: 1">
+                  <label class="label">End Date</label>
+                  <input v-model="form.end_date" type="date" required class="input" />
                 </div>
               </div>
 
-              <button type="submit" :disabled="submitting" class="btn" style="width: auto; padding: 12px 28px;">
-                {{ submitting ? 'Deploying...' : 'Deploy Challenge' }}
+              <label class="label">Target CO₂ Reduction (kg)</label>
+              <input v-model.number="form.target_co2_reduction" type="number" step="0.01" min="0" required class="input" />
+
+              <button type="submit" :disabled="submitting" class="btn" style="width: auto; padding: 12px 28px; margin-top: 8px">
+                {{ submitting ? 'Creating...' : 'Create Challenge' }}
               </button>
             </form>
           </section>
 
           <section class="admin-panel">
-            <h2 style="margin-top: 0; color: #1f7a36;">Platform Stats</h2>
-            <div style="margin-top: 16px;">
-              <p style="margin: 8px 0; font-size: 14px; color: #6d7a6b;">Active Schemes:</p>
-              <div style="font-size: 28px; font-weight: 800; color: #1f2a1f;">{{ challenges.length }}</div>
-            </div>
-            <div style="margin-top: 16px;">
-              <p style="margin: 8px 0; font-size: 14px; color: #6d7a6b;">Reward Integrity:</p>
-              <span class="success-text" style="font-size: 14px;">✓ Live Accruals Syncing</span>
-            </div>
+            <h2 style="margin-top: 0">Overview</h2>
+            <p class="subtitle">Total Challenges</p>
+            <div style="font-size: 28px; font-weight: 800">{{ challenges.length }}</div>
           </section>
         </div>
 
-        <section class="admin-panel" style="margin-top: 18px;">
-          <h2 style="margin-top: 0; color: #1f7a36;">Active System Challenges Registry</h2>
-          
-          <div v-if="loading" style="padding: 24px; text-align: center; color: #6d7a6b;">
-            Fetching global challenges ledger...
-          </div>
+        <section class="admin-panel" style="margin-top: 18px">
+          <h2 style="margin-top: 0">All Challenges</h2>
+
+          <p v-if="loading">Loading challenges...</p>
 
           <table v-else class="admin-table">
             <thead>
               <tr>
-                <th>ID Reference</th>
-                <th>Challenge Title / Goal</th>
-                <th>Target Rewards</th>
-                <th>Timeframe Window</th>
-                <th style="text-align: right;">Actions</th>
+                <th>Name</th>
+                <th>Target CO₂</th>
+                <th>Dates</th>
+                <th>Members</th>
+                <th style="text-align: right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in challenges" :key="item.id">
-                <td><code style="background: #eef5ee; padding: 4px 8px; border-radius: 6px;">#{{ item.id }}</code></td>
+              <tr v-for="c in challenges" :key="c.id">
                 <td>
-                  <strong>{{ item.title }}</strong>
-                  <div style="font-size: 12px; color: #6d7a6b; margin-top: 4px;">{{ item.description }}</div>
+                  <strong>{{ c.name }}</strong>
+                  <div style="font-size: 12px; color: #6d7a6b; margin-top: 4px">{{ c.description }}</div>
                 </td>
-                <td><span class="success-text">+{{ item.points }} pts</span></td>
-                <td>{{ item.days || 7 }} Days</td>
-                <td style="text-align: right;">
-                  <button 
-                    @click="handleDeleteChallenge(item.id)" 
-                    :disabled="deletingId === item.id"
-                    style="background: transparent; border: none; color: #c62828; font-weight: bold; cursor: pointer; font-size: 13px;"
+                <td class="success-text">{{ c.target_co2_reduction }} kg</td>
+                <td>{{ c.start_date }} → {{ c.end_date }}</td>
+                <td>{{ c.member_count }}</td>
+                <td style="text-align: right">
+                  <button
+                    @click="handleDeleteChallenge(c.id)"
+                    :disabled="deletingId === c.id"
+                    style="background: transparent; border: none; color: #c62828; font-weight: bold; cursor: pointer; font-size: 13px"
                   >
-                    {{ deletingId === item.id ? 'Removing...' : 'Delete' }}
+                    {{ deletingId === c.id ? 'Deleting...' : 'Delete' }}
                   </button>
                 </td>
               </tr>
               <tr v-if="challenges.length === 0">
-                <td colspan="5" style="text-align: center; color: #6d7a6b; padding: 24px;">
-                  No active custom tasks deployed. Use the configuration form above to spin up a new challenge.
+                <td colspan="5" style="text-align: center; color: #6d7a6b; padding: 24px">
+                  No challenges yet. Create one above.
                 </td>
               </tr>
             </tbody>
@@ -118,15 +108,15 @@ const challenges = ref([])
 const loading = ref(true)
 const submitting = ref(false)
 const deletingId = ref(null)
-
 const feedbackMsg = ref('')
 const isError = ref(false)
 
 const form = ref({
-  title: '',
+  name: '',
   description: '',
-  points: 50,
-  days: 7
+  start_date: '',
+  end_date: '',
+  target_co2_reduction: 0,
 })
 
 async function fetchChallenges() {
@@ -134,7 +124,7 @@ async function fetchChallenges() {
   try {
     challenges.value = await getChallenges()
   } catch (err) {
-    console.error('Challenge population error:', err)
+    console.error('Failed to load challenges:', err)
   } finally {
     loading.value = false
   }
@@ -144,40 +134,37 @@ async function handleCreateChallenge() {
   submitting.value = true
   feedbackMsg.value = ''
   isError.value = false
-
   try {
     await createChallenge({
-      title: form.value.title.trim(),
+      name: form.value.name.trim(),
       description: form.value.description.trim(),
-      points: parseInt(form.value.points),
-      days: parseInt(form.value.days)
+      start_date: form.value.start_date,
+      end_date: form.value.end_date,
+      target_co2_reduction: form.value.target_co2_reduction,
     })
-    
-    feedbackMsg.value = 'Success: Task deployed directly to client challenge arrays.'
-    form.value = { title: '', description: '', points: 50, days: 7 }
+    feedbackMsg.value = 'Challenge created successfully.'
+    form.value = { name: '', description: '', start_date: '', end_date: '', target_co2_reduction: 0 }
     await fetchChallenges()
   } catch (err) {
     isError.value = true
-    feedbackMsg.value = `Deployment Interrupted: ${err.message}`
+    feedbackMsg.value = err.message
   } finally {
     submitting.value = false
   }
 }
 
 async function handleDeleteChallenge(id) {
-  if (!confirm('Are you certain you want to scrap this challenge item from the platform database?')) return
-  
+  if (!confirm('Delete this challenge? This cannot be undone.')) return
   deletingId.value = id
   feedbackMsg.value = ''
   isError.value = false
-
   try {
     await deleteChallenge(id)
-    feedbackMsg.value = 'Success: Challenge decommissioned cleanly.'
+    feedbackMsg.value = 'Challenge deleted.'
     await fetchChallenges()
   } catch (err) {
     isError.value = true
-    feedbackMsg.value = `Teardown Error: ${err.message}`
+    feedbackMsg.value = err.message
   } finally {
     deletingId.value = null
   }

@@ -37,13 +37,12 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to, from) => {
+router.beforeEach((to) => {
   const authStore = useAuthStore()
   const isLoggedIn = !!authStore.token
   const isAdmin = authStore.user?.role === 'admin'
 
   if (to.path === '/login' || to.path === '/register') {
-    // If they are already logged in, optionally kick them to the dashboard
     if (isLoggedIn) {
       return isAdmin ? '/admin' : '/dashboard'
     }

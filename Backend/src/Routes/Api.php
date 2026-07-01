@@ -81,11 +81,13 @@ final class Api
         $app->put('/api/challenges/{id}', [$challenge, 'update'])->add(new JwtAuthMiddleware($jwt, 'leader'));
         $app->delete('/api/challenges/{id}', [$challenge, 'destroy'])->add(new JwtAuthMiddleware($jwt, 'leader'));
 
-        // --- Administrator: tip library + emission factors ---
-        $app->post('/api/admin/tips', [$admin, 'createTip'])->add(new JwtAuthMiddleware($jwt, 'admin'));
-        $app->get('/api/admin/factors', [$admin, 'listFactors'])->add(new JwtAuthMiddleware($jwt, 'admin'));
-        $app->put('/api/admin/factors/{id}', [$admin, 'updateFactor'])->add(new JwtAuthMiddleware($jwt, 'admin'));
-
+        // Admin-specific challenge management (same controller, same logic, admin-gated)
+        $app->post('/api/admin/challenges', [$challenge, 'store'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->put('/api/admin/challenges/{id}', [$challenge, 'update'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->delete('/api/admin/challenges/{id}', [$challenge, 'destroy'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->post('/api/admin/badges', [$badges, 'store'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        $app->delete('/api/admin/badges/{id}', [$badges, 'destroy'])->add(new JwtAuthMiddleware($jwt, 'admin'));
+        
         // --- CORS preflight: answer OPTIONS for any path ---
         $app->options('/{routes:.+}', fn ($req, $res) => $res);
     }

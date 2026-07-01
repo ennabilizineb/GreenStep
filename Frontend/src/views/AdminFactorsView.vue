@@ -29,8 +29,13 @@ async function saveFactor(id) {
   savingId.value = id
   error.value = ''
   try {
-    await updateFactor(id, parseFloat(editValues.value[id]))
-    await fetchFactors()
+    // Wrap your raw input text into a typed JSON body object
+    const payload = {
+      kg_co2_per_unit: parseFloat(editValues.value[id])
+    }
+    
+    await updateFactor(id, payload)
+    await fetchFactors() // Refresh the numbers
   } catch (err) {
     error.value = err.message
   } finally {

@@ -81,8 +81,17 @@ export async function createChallenge(payload) {
   })
 }
 
+export async function updateChallenge(id, payload) {
+  return request(`/api/admin/challenges/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function deleteChallenge(id) {
-  return request(`/api/admin/challenges/${id}`, { method: 'DELETE' })
+  return request(`/api/admin/challenges/${id}`, {
+    method: 'DELETE',
+  })
 }
 
 export async function getBadges() {
@@ -104,10 +113,10 @@ export async function getFactors() {
   return request('/api/admin/factors', { method: 'GET' })
 }
 
-export async function updateFactor(id, kg_co2_per_unit) {
+export async function updateFactor(id, payload) {
   return request(`/api/admin/factors/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify({ kg_co2_per_unit }),
+    method: 'POST',
+    body: JSON.stringify(payload),
   })
 }
 
