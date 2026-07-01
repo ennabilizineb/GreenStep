@@ -17,7 +17,11 @@ async function handleLogin() {
 
   try {
     await authoStore.loginUser(email.value, password.value)
-    router.push('/dashboard')
+    if (authoStore.user?.role === 'admin') {
+      router.push('/admin')
+    } else {
+      router.push('/dashboard')
+    }
   } catch (err) {
     error.value = err.message
   } finally {
