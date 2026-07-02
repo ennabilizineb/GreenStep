@@ -17,6 +17,7 @@ async function request(endpoint, options = {}) {
 
   if (response.status === 401) {
     localStorage.clear()
+    throw new Error('Unauthorized. Please log in again.')
     return
   }
 
