@@ -1,9 +1,5 @@
-# Backend/Dockerfile
-# Render-friendly container for GreenStep Slim PHP API.
-
 FROM php:8.1-cli
 
-# Install PHP extensions required for PDO MySQL and Composer dependencies.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         unzip \
@@ -12,7 +8,6 @@ RUN apt-get update \
     && docker-php-ext-install pdo_mysql \
     && rm -rf /var/lib/apt/lists/*
 
-# Use Composer from the official image for dependency installation.
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
