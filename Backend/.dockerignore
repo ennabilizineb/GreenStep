@@ -1,6 +1,5 @@
+vendor
+node_modules
 .git
 .env
-vendor/
-docker-compose*
-Dockerfile
-README.md
+.DS_Store
