@@ -30,7 +30,7 @@ Built for **SCSM2223 – Cross-Platform Application Development**, Universiti Te
 | Layer | Technology |
 |---|---|
 | Frontend | Vue 3 (Composition API), Vue Router 5, Pinia 3, Vite 8 |
-| Mobile | Capacitor (Android APK, iOS-ready) |
+| Mobile | Capacitor (Android APK) |
 | Backend / API | PHP 8.1, Slim 4 (RESTful micro-framework) |
 | Auth | JWT (HS256), bcrypt password hashing |
 | Database | MySQL 8, accessed via PDO (prepared statements) |
