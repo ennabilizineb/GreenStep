@@ -15,8 +15,6 @@ Built for **SCSM2223 – Cross-Platform Application Development**, Universiti Te
 - [System Architecture](#system-architecture)
 - [Entity Relationship Diagram](#entity-relationship-diagram)
 - [Project Structure](#project-structure)
-- [Setup Guide](#setup-guide)
-- [API Contract](#api-contract)
 - [Security](#security)
 - [Deployment Guide](#deployment-guide)
 - [Mobile Deployment Guide](#mobile-deployment-guide)
@@ -89,124 +87,99 @@ Built for **SCSM2223 – Cross-Platform Application Development**, Universiti Te
 
 ```mermaid
 classDiagram
-    direction TB
+    direction LR
 
-    class users {
-        +int id
-        +string email
-        +string password_hash
-        +string full_name
-        +string role
-        +int current_streak
-        +int max_streak
-        +timestamp created_at
+    %% --- TABLES / CLASSES ---
+
+    class Badge {
+        +badge_id : INT_PK
+        +name : VARCHAR_120
+        +criteria_json : JSON
+        +image_url : VARCHAR_255
     }
 
-    class carbon_logs {
-        +int id
-        +int user_id
-        +string category
-        +decimal quantity
-        +string unit
-        +decimal co2_emitted_kg
-        +date logged_date
-        +timestamp created_at
+    class User_Badge {
+        +badge_id : INT_PK_FK
+        +user_id : INT_PK_FK
+        +awarded_on : DATETIME
     }
 
-    class challenges {
-        +int id
-        +string title
-        +string description
-        +string target_category
-        +decimal target_value
-        +int points_reward
-        +date start_date
-        +date end_date
+    class User {
+        +user_id : INT_PK
+        +role_id : INT_FK
+        +name : VARCHAR_120
+        +email : VARCHAR_190_UNIQUE
+        +password_hash : VARCHAR_225
+        +joined_at : DATETIME
     }
 
-    class user_challenges {
-        +int id
-        +int user_id
-        +int challenge_id
-        +string status
-        +timestamp joined_at
-        +timestamp completed_at
+    class Role {
+        +role_id : INT_PK
+        +name : VARCHAR_30
     }
 
-    class badges {
-        +int id
-        +string title
-        +string description
-        +string icon_slug
-        +string requirement_type
-        +int requirement_value
+    class Setting {
+        +setting_key : VARCHAR_60_PK
+        +setting_value : TEXT_NULL
     }
 
-    class user_badges {
-        +int id
-        +int user_id
-        +int badge_id
-        +timestamp earned_at
+    class Challenge_Member {
+        +challenge_id : INT_PK_FK
+        +user_id : INT_PK_FK
     }
 
-    class eco_tips {
-        +int id
-        +string category
-        +string title
-        +string content
-        +int likes_count
-        +int created_by_admin_id
+    class Challenge {
+        +challenge_id : INT_PK
+        +name : VARCHAR_160
+        +description : TEXT
+        +start_date : DATE
+        +end_date : DATE
+        +target_co2_reduction : DECIMAL_10_2
     }
 
-    class groups {
-        +int id
-        +string name
-        +string description
-        +int created_by_leader_id
-        +timestamp created_at
+    class Activity_Log {
+        +activity_log_id : INT_PK
+        +user_id : INT_FK
+        +activity_type_id : INT_FK
+        +amount : DECIMAL_10_2
+        +logged_on : DATETIME
     }
 
-    class group_members {
-        +int id
-        +int group_id
-        +int user_id
-        +string role
-        +timestamp joined_at
+    class Activity_Type {
+        +activity_type_id : INT_PK
+        +category_id : INT_FK
+        +name : VARCHAR_120
+        +unit : VARCHAR_30
+        +kg_co2_per_unit : DECIMAL_10_4
     }
 
-    class group_challenges {
-        +int id
-        +int group_id
-        +int challenge_id
-        +timestamp assigned_at
+    class Category {
+        +category_id : INT_PK
+        +name : VARCHAR_60_UNIQUE
+        +description : VARCHAR_160
     }
 
-    class audit_logs {
-        +int id
-        +int actor_id
-        +string action
-        +string target_table
-        +int target_id
-        +timestamp performed_at
+    class Tip {
+        +tip_id : INT_PK
+        +category_id : INT_FK
+        +added_by : INT_FK
+        +title : VARCHAR_160
+        +body : TEXT
+        +source_url : VARCHAR_255
     }
 
-    %% UML Multiplicities & Directed Associations
-    users "1" --> "0..*" carbon_logs : tracks
-    users "1" --> "0..*" user_challenges : participates
-    challenges "1" --> "0..*" user_challenges : defines
-    users "1" --> "0..*" user_badges : earns
-    badges "1" --> "0..*" user_badges : awards
-    
-    users "1" --> "0..*" eco_tips : creates (Admin)
-    users "1" --> "0..*" groups : creates (Leader)
-    
-    groups "1" --> "0..*" group_members : contains
-    users "1" --> "0..*" group_members : joins
-    
-    groups "1" --> "0..*" group_challenges : hosts
-    challenges "1" --> "0..*" group_challenges : applies
-    
-    users "1" --> "0..*" audit_logs : triggers
+    %% --- RELATIONSHIPS & MULTIPLICITIES ---
+
+    Badge "1..1" -- "0..*" User_Badge : awarded as
+    User "1..1" -- "0..*" User_Badge : earns
+    Role "1..1" -- "0..*" User : assigned to
+    User "1..1" -- "0..*" Challenge_Member : participates in
+    Challenge "1..1" -- "0..*" Challenge_Member : includes
+    User "1..1" -- "0..*" Activity_Log : records
+    Activity_Type "1..1" -- "0..*" Activity_Log : is logged in
+    Category "1..1" -- "0..*" Activity_Type : groups
+    Category "1..1" -- "0..*" Tip : groups
+    User "1..1" -- "0..*" Tip : added by
 ```
 ---
 
