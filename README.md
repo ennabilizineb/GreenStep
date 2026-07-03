@@ -88,85 +88,126 @@ Built for **SCSM2223 – Cross-Platform Application Development**, Universiti Te
 11 tables, fully normalized, with referential integrity enforced at the database level.
 
 ```mermaid
-erDiagram
-    Role ||--o{ User : "has"
-    User ||--o{ Activity_Log : "logs"
-    User ||--o{ Tip : "authors (added_by)"
-    User }o--o{ Badge : "User_Badge"
-    User }o--o{ Challenge : "Challenge_Member"
-    Category ||--o{ Activity_Type : "classifies"
-    Category ||--o{ Tip : "classifies"
-    Activity_Type ||--o{ Activity_Log : "used in"
+classDiagram
+    direction TB
 
-    Role {
-        int role_id PK
-        varchar name
+    class users {
+        +int id
+        +string email
+        +string password_hash
+        +string full_name
+        +string role
+        +int current_streak
+        +int max_streak
+        +timestamp created_at
     }
-    User {
-        int user_id PK
-        int role_id FK
-        varchar name
-        varchar email
-        varchar password_hash
-        tinyint is_active
-        datetime joined_at
+
+    class carbon_logs {
+        +int id
+        +int user_id
+        +string category
+        +decimal quantity
+        +string unit
+        +decimal co2_emitted_kg
+        +date logged_date
+        +timestamp created_at
     }
-    Badge {
-        int badge_id PK
-        varchar name
-        json criteria_json
-        varchar image_url
+
+    class challenges {
+        +int id
+        +string title
+        +string description
+        +string target_category
+        +decimal target_value
+        +int points_reward
+        +date start_date
+        +date end_date
     }
-    User_Badge {
-        int badge_id PK_FK
-        int user_id PK_FK
-        datetime awarded_on
+
+    class user_challenges {
+        +int id
+        +int user_id
+        +int challenge_id
+        +string status
+        +timestamp joined_at
+        +timestamp completed_at
     }
-    Category {
-        int category_id PK
-        varchar name
-        varchar description
+
+    class badges {
+        +int id
+        +string title
+        +string description
+        +string icon_slug
+        +string requirement_type
+        +int requirement_value
     }
-    Activity_Type {
-        int activity_type_id PK
-        int category_id FK
-        varchar name
-        varchar unit
-        decimal kg_co2_per_unit
+
+    class user_badges {
+        +int id
+        +int user_id
+        +int badge_id
+        +timestamp earned_at
     }
-    Activity_Log {
-        int activity_log_id PK
-        int user_id FK
-        int activity_type_id FK
-        decimal amount
-        datetime logged_on
+
+    class eco_tips {
+        +int id
+        +string category
+        +string title
+        +string content
+        +int likes_count
+        +int created_by_admin_id
     }
-    Tip {
-        int tip_id PK
-        int category_id FK
-        int added_by FK
-        varchar title
-        text body
-        varchar source_url
+
+    class groups {
+        +int id
+        +string name
+        +string description
+        +int created_by_leader_id
+        +timestamp created_at
     }
-    Challenge {
-        int challenge_id PK
-        varchar name
-        text description
-        date start_date
-        date end_date
-        decimal target_co2_reduction
+
+    class group_members {
+        +int id
+        +int group_id
+        +int user_id
+        +string role
+        +timestamp joined_at
     }
-    Challenge_Member {
-        int challenge_id PK_FK
-        int user_id PK_FK
+
+    class group_challenges {
+        +int id
+        +int group_id
+        +int challenge_id
+        +timestamp assigned_at
     }
-    Setting {
-        varchar setting_key PK
-        text setting_value
+
+    class audit_logs {
+        +int id
+        +int actor_id
+        +string action
+        +string target_table
+        +int target_id
+        +timestamp performed_at
     }
+
+    %% UML Multiplicities & Directed Associations
+    users "1" --> "0..*" carbon_logs : tracks
+    users "1" --> "0..*" user_challenges : participates
+    challenges "1" --> "0..*" user_challenges : defines
+    users "1" --> "0..*" user_badges : earns
+    badges "1" --> "0..*" user_badges : awards
+    
+    users "1" --> "0..*" eco_tips : creates (Admin)
+    users "1" --> "0..*" groups : creates (Leader)
+    
+    groups "1" --> "0..*" group_members : contains
+    users "1" --> "0..*" group_members : joins
+    
+    groups "1" --> "0..*" group_challenges : hosts
+    challenges "1" --> "0..*" group_challenges : applies
+    
+    users "1" --> "0..*" audit_logs : triggers
 ```
-
 ---
 
 ## Project Structure
